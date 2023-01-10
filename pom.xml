@@ -11,7 +11,6 @@
     
     <groupId>com.slinkytoybox.gcloud</groupId>
     <artifactId>platformconnector</artifactId>
-    
     <version>0.0.1-SNAPSHOT</version>
     
     <name>Genesys Cloud Platform Connector</name>
@@ -122,7 +121,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.slinkytoybox.gcloud.platformconnector.PlatformConnectorApplication</mainClass>
+                            <mainClass>com.slinkytoybox.gcloud.platformconnector.GCloudPlatformConnectorApplication</mainClass>
                             <addDefaultImplementationEntries>
                                 true
                             </addDefaultImplementationEntries>
