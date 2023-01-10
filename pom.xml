@@ -89,7 +89,10 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        
+        <dependency>
+            <groupId>com.slinkytoybox.gcloud</groupId>
+            <artifactId>platformconnectorplugin</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
     </dependencies>
 
     <build>
