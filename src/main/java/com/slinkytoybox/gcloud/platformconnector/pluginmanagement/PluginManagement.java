@@ -20,6 +20,8 @@
 package com.slinkytoybox.gcloud.platformconnector.pluginmanagement;
 
 import com.slinkytoybox.gcloud.platformconnectorplugin.PlatformConnectorPlugin;
+import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthResult;
+import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthStatus;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -62,11 +64,13 @@ public class PluginManagement {
             RegisteredPlugin rp = new RegisteredPlugin()
                     .setId(pluginId)
                     .setPlugin(pcp)
+                    .setHealth(pcp == null ? new HealthResult().setOverallStatus(HealthStatus.UNKNOWN) : pcp.getPluginHealth())
                     .setDescription(plug.getDescriptor().getPluginDescription())
                     .setVersion(plug.getDescriptor().getVersion())
                     .setCls(plug.getDescriptor().getPluginClass())
                     .setProvider(plug.getDescriptor().getProvider())
-                    .setState(plug.getPluginState().name());
+                    .setState(plug.getPluginState().name())
+                    ;
             pluginMap.put(pluginId, rp);
         }
         log.info("{}Found {} registered plugins", logPrefix, pluginMap.size());

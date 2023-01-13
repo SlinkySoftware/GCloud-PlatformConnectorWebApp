@@ -33,13 +33,14 @@
         <br/>
         <h2>Loaded Plugins</h2>
         <table border="1" cellpadding="4">
-            <tr><th>Plugin ID</th><th>Version</th><th>Description</th><th>Provider</th><th>State</th><th>Action</th></tr>
+            <tr><th>Plugin ID</th><th>Version</th><th>Description</th><th>Provider</th><th>State</th><th>Overall Health</th><th>Action</th></tr>
             <tr th:each="plugin: ${plugins}">
                 <td th:text="${plugin.id}"/>
                 <td th:text="${plugin.version}"/>
                 <td th:text="${plugin.description}"/>
                 <td th:text="${plugin.provider}"/>
                 <td th:text="${plugin.state}"/>
+                <td th:text="${plugin.health.getOverallStatus()}"/>
                 <td>
                     <button type="button" th:if="${plugin.state != 'STARTED'}" th:data-id="${plugin.id}" th:onclick="changeState(1, this.getAttribute('data-id'));">Start</button>
                     <button type="button" th:if="${plugin.state == 'STARTED'}" th:data-id="${plugin.id}" th:onclick="changeState(2, this.getAttribute('data-id'));">Stop</button>

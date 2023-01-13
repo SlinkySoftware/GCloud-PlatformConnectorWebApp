@@ -20,6 +20,7 @@
 package com.slinkytoybox.gcloud.platformconnector.pluginmanagement;
 
 import com.slinkytoybox.gcloud.platformconnectorplugin.PlatformConnectorPlugin;
+import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthResult;
 import lombok.Data;
 import lombok.ToString;
 import lombok.experimental.Accessors;
@@ -34,6 +35,7 @@ import lombok.experimental.Accessors;
 public class RegisteredPlugin {
 
     private PlatformConnectorPlugin plugin;
+    private HealthResult health;
     private String id;
     private String version;
     private String description;
