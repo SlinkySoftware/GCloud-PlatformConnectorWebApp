@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--
+  platformconnector - plugins.html
+
+  Copyright (c) 2022-2023, Slinky Software
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as
+  published by the Free Software Foundation, either version 3 of the
+  License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  A copy of the GNU Affero General Public License is located in the 
+  AGPL-3.0.md supplied with the source code.
+
+-->
+<html>
+    <head>
+        <title>Plugin Management</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Platform Connector Plugin Management</h1>
+        <br/>
+        <button onclick="window.location.replace('/plugins/');" type="button">Refresh</button>
+        <br/>
+        <h3 style="color: #ff0000" th:if="${showError == 1}" th:text="${message}"></h3>
+        <br/>
+        <h2>Loaded Plugins</h2>
+        <table border="1" cellpadding="4">
+            <tr><th>Plugin ID</th><th>Version</th><th>Description</th><th>Provider</th><th>State</th><th>Action</th></tr>
+            <tr th:each="plugin: ${plugins}">
+                <td th:text="${plugin.id}"/>
+                <td th:text="${plugin.version}"/>
+                <td th:text="${plugin.description}"/>
+                <td th:text="${plugin.provider}"/>
+                <td th:text="${plugin.state}"/>
+                <td>
+                    <button type="button" th:if="${plugin.state != 'STARTED'}" th:data-id="${plugin.id}" th:onclick="changeState(1, this.getAttribute('data-id'));">Start</button>
+                    <button type="button" th:if="${plugin.state == 'STARTED'}" th:data-id="${plugin.id}" th:onclick="changeState(2, this.getAttribute('data-id'));">Stop</button>
+                    <button type="button" th:if="${plugin.state == 'STOPPED'}" th:data-id="${plugin.id}" th:onclick="changeState(0, this.getAttribute('data-id'));">Unload</button>
+                </td>
+
+            </tr>
+        </table><br/>
+        <h2>Load New Plugin</h2>
+        <form method="POST">
+            <table>
+                <tr><td colspan="3">Enter the JAR name as it exists in the plugins/ folder.</td></tr>
+                <input type="hidden" name="action" value="load"/>
+                <tr><td><label for="filename">File Name</label></td><td><input type=text value="" id="filename" name="filename"/></td><td><input type="Submit" value="Load Plugin"/></td></tr>
+            </table>
+        </form>
+    </body>
+    <script>
+        function changeState(state, plugin) {
+            console.log("Changing State to", state, "of plugin", plugin);
+            var tempForm = document.createElement('form');
+            tempForm.method = "POST";
+            tempForm.id = "changeState";
+            var hiddenInput1 = document.createElement('input');
+            hiddenInput1.type = 'hidden';
+            hiddenInput1.value = state;
+            hiddenInput1.name = 'state';
+            tempForm.appendChild(hiddenInput1);
+            var hiddenInput2 = document.createElement('input');
+            hiddenInput2.type = 'hidden';
+            hiddenInput2.value = plugin;
+            hiddenInput2.name = 'plugin';
+            tempForm.appendChild(hiddenInput2);
+            var hiddenInput3 = document.createElement('input');
+            hiddenInput3.type = 'hidden';
+            hiddenInput3.value = "change";
+            hiddenInput3.name = 'action';
+            tempForm.appendChild(hiddenInput3);
+            document.body.appendChild(tempForm);
+            tempForm.submit();
+            tempForm.remove();
+        }
+    </script>
+</html>

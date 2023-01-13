@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.PluginWrapper;
 import org.pf4j.spring.SpringPluginManager;
@@ -41,6 +42,7 @@ public class PluginManagement {
 
     private final Map<String, RegisteredPlugin> pluginMap = new HashMap<>();
 
+    @PostConstruct
     public Map<String, RegisteredPlugin> getAllPlugins() {
         final String logPrefix = "getAllPlugins() - ";
         log.trace("{}Entering Method", logPrefix);
@@ -108,7 +110,7 @@ public class PluginManagement {
             log.info("{}Attempting to stop {}", logPrefix, pluginName);
             pluginMap.get(pluginName).setState(pluginManager.stopPlugin(pluginName).name());
             log.info("{}Plugin {} state {}", logPrefix, pluginName, pluginMap.get(pluginName).getState());
-            return pluginMap.get(pluginName).getState().equalsIgnoreCase("STOPPPED");
+            return pluginMap.get(pluginName).getState().equalsIgnoreCase("STOPPED");
         }
         else {
             log.warn("{}Plugin {} is not registered, not doing anything", logPrefix, pluginName);
