@@ -28,13 +28,12 @@ public class SpringApplicationInitialisation extends AbstractAnnotationConfigDis
 
     @Override
     protected Class<?>[] getRootConfigClasses() {
-        return null;
+        return new Class[0] ;
     }
 
     @Override
     protected Class<?>[] getServletConfigClasses() {
-        return null;
-//        return new Class[]{SpringWebConfig.class};
+        return new Class[]{SpringWebConfig.class};
     }
 
     @Override

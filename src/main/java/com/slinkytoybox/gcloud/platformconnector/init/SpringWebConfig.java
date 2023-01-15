@@ -46,7 +46,6 @@ public class SpringWebConfig implements WebMvcConfigurer {
     @Autowired
     ApplicationContext applicationContext;
     
-    @Bean
     public SpringResourceTemplateResolver templateResolver() {
         SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
         templateResolver.setApplicationContext(applicationContext);

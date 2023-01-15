@@ -59,7 +59,7 @@ public class PluginController {
         final String logPrefix = "rootGet() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Processing GET /plugins/", logPrefix);
-        model = rootModel(model);
+        rootModel(model);
         return "plugins";
     }
 
@@ -163,7 +163,7 @@ public class PluginController {
             model.addAttribute("showError", 1);
             model.addAttribute("message", "Invalid Action Specified");
         }
-        model = rootModel(model);
+        rootModel(model);
         return "plugins";
     }
 
@@ -172,7 +172,7 @@ public class PluginController {
         log.trace("{}Entering method", logPrefix);
         Map<String, RegisteredPlugin> plugs = pluginManagement.getAllPlugins();
         List<RegisteredPlugin> rps = new ArrayList<>();
-        plugs.values().forEach(v -> rps.add(v));
+        plugs.values().forEach(rps::add);
         model.addAttribute("plugins", rps);
         log.trace("{}Model: {}", logPrefix, model);
         return model;
