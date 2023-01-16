@@ -33,6 +33,7 @@ import com.slinkytoybox.gcloud.platformconnectorplugin.response.*;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,9 +49,9 @@ import org.springframework.web.context.request.WebRequest;
 @RequestMapping("/api/v1/")
 public class APIController {
 
-    private final String ORGANISATION_HEADER = "ININ-Organization-Id";
-    private final String CORRELATION_HEADER = "ININ-Correlation-Id";
-    private final String REQUEST_HEADER = "ININ-Request-Id";
+    private static final String ORG_HDR = "ININ-Organization-Id";
+    private static final String COR_HDR = "ININ-Correlation-Id";
+    private static final String REQ_HDR = "ININ-Request-Id";
 
     @Autowired
     private PluginManagement pluginManagement;
@@ -60,14 +61,14 @@ public class APIController {
         String logPrefix = "getRecordSearch() - ";
         log.trace("{}Entering method", logPrefix);
         log.debug("{}Checking GCloud Headers", logPrefix);
-        final String orgHeader = (webReq.getHeader(ORGANISATION_HEADER) == null ? "" : webReq.getHeader(ORGANISATION_HEADER));
-        final String corHeader = (webReq.getHeader(CORRELATION_HEADER) == null ? "" : webReq.getHeader(CORRELATION_HEADER));
-        final String reqHeader = (webReq.getHeader(REQUEST_HEADER) == null ? "" : webReq.getHeader(REQUEST_HEADER));
-        if (orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
+        final String orgHeader = webReq.getHeader(ORG_HDR);
+        final String corHeader = webReq.getHeader(COR_HDR);
+        final String reqHeader = webReq.getHeader(REQ_HDR);
+        if (orgHeader== null || corHeader == null || reqHeader==null || orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
         }
         String requestId = reqHeader;
-        logPrefix = "getRecordSearch() - " + (requestId == null ? "[null] - " : "[" + requestId + "] - ");
+        logPrefix = "getRecordSearch() - " + "[" + requestId + "] - ";
         log.info("{}Processing POST /{}/record/search", logPrefix, pluginId);
         log.debug("{}JSON Data: {}", logPrefix, request);
         JSONReadResponse jsonResponse = new JSONReadResponse(requestId);
@@ -91,7 +92,7 @@ public class APIController {
             pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
             pluginRequest.setSearchParameters(request.getSearchParameters());
             ReadResponse pluginResponse = (ReadResponse) plug.plugin.getResponseFromRequest(pluginRequest);
-            if (pluginResponse.getSuccess()) {
+            if (pluginResponse.isSuccess()) {
                 log.info("{}Successfully looked up data", logPrefix);
                 jsonResponse.setObjectId(pluginResponse.getObjectId());
                 jsonResponse.setObjectDetails(pluginResponse.getObjectDetails());
@@ -116,13 +117,14 @@ public class APIController {
         String logPrefix = "getItemSingle() - ";
         log.trace("{}Entering method", logPrefix);
         log.debug("{}Checking GCloud Headers", logPrefix);
-        final String orgHeader = (webReq.getHeader(ORGANISATION_HEADER) == null ? "" : webReq.getHeader(ORGANISATION_HEADER));
-        final String corHeader = (webReq.getHeader(CORRELATION_HEADER) == null ? "" : webReq.getHeader(CORRELATION_HEADER));
-        final String reqHeader = (webReq.getHeader(REQUEST_HEADER) == null ? "" : webReq.getHeader(REQUEST_HEADER));
-        if (orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
+        final String orgHeader = webReq.getHeader(ORG_HDR);
+        final String corHeader = webReq.getHeader(COR_HDR);
+        final String reqHeader = webReq.getHeader(REQ_HDR);
+        if (orgHeader== null || corHeader == null || reqHeader==null || orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
         }
         String requestId = reqHeader;
+        logPrefix = "getItemSingle() - " + "[" + requestId + "] - ";
         log.info("{}Processing GET /{}/record/{}", logPrefix, pluginId, recordId);
         
         HttpStatus returnStatus;
@@ -144,7 +146,7 @@ public class APIController {
             pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
             pluginRequest.setObjectId(recordId);
             ReadResponse pluginResponse = (ReadResponse) plug.plugin.getResponseFromRequest(pluginRequest);
-            if (pluginResponse.getSuccess()) {
+            if (pluginResponse.isSuccess()) {
                 log.info("{}Successfully looked up data", logPrefix);
                 jsonResponse.setObjectId(pluginResponse.getObjectId());
                 jsonResponse.setObjectDetails(pluginResponse.getObjectDetails());
@@ -169,13 +171,14 @@ public class APIController {
         String logPrefix = "updateItem() - ";
         log.trace("{}Entering method", logPrefix);
         log.debug("{}Checking GCloud Headers", logPrefix);
-        final String orgHeader = (webReq.getHeader(ORGANISATION_HEADER) == null ? "" : webReq.getHeader(ORGANISATION_HEADER));
-        final String corHeader = (webReq.getHeader(CORRELATION_HEADER) == null ? "" : webReq.getHeader(CORRELATION_HEADER));
-        final String reqHeader = (webReq.getHeader(REQUEST_HEADER) == null ? "" : webReq.getHeader(REQUEST_HEADER));
-        if (orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
+        final String orgHeader = webReq.getHeader(ORG_HDR);
+        final String corHeader = webReq.getHeader(COR_HDR);
+        final String reqHeader = webReq.getHeader(REQ_HDR);
+        if (orgHeader== null || corHeader == null || reqHeader==null || orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
         }
         String requestId = reqHeader;
+        logPrefix = "updateItem() - " + "[" + requestId + "] - ";
         log.info("{}Processing PATCH /{}/record/{}", logPrefix, pluginId, recordId);
         log.debug("{}JSON Data: {}", logPrefix, request);
         JSONUpdateResponse jsonResponse = new JSONUpdateResponse(requestId);
@@ -197,13 +200,15 @@ public class APIController {
         String logPrefix = "createItem() - ";
         log.trace("{}Entering method", logPrefix);
         log.debug("{}Checking GCloud Headers", logPrefix);
-        final String orgHeader = (webReq.getHeader(ORGANISATION_HEADER) == null ? "" : webReq.getHeader(ORGANISATION_HEADER));
-        final String corHeader = (webReq.getHeader(CORRELATION_HEADER) == null ? "" : webReq.getHeader(CORRELATION_HEADER));
-        final String reqHeader = (webReq.getHeader(REQUEST_HEADER) == null ? "" : webReq.getHeader(REQUEST_HEADER));
-        if (orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
+        final String orgHeader = webReq.getHeader(ORG_HDR);
+        final String corHeader = webReq.getHeader(COR_HDR);
+        final String reqHeader = webReq.getHeader(REQ_HDR);
+        if (orgHeader== null || corHeader == null || reqHeader==null || orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
         }
         String requestId = reqHeader;
+        logPrefix = "createItem() - " + "[" + requestId + "] - ";
+
         log.info("{}Processing POST /{}/record/{}", logPrefix, pluginId, recordId);
         log.debug("{}JSON Data: {}", logPrefix, request);
         JSONCreateResponse jsonResponse = new JSONCreateResponse(requestId);
@@ -225,13 +230,15 @@ public class APIController {
         String logPrefix = "deleteItem() - ";
         log.trace("{}Entering method", logPrefix);
         log.debug("{}Checking GCloud Headers", logPrefix);
-        final String orgHeader = (webReq.getHeader(ORGANISATION_HEADER) == null ? "" : webReq.getHeader(ORGANISATION_HEADER));
-        final String corHeader = (webReq.getHeader(CORRELATION_HEADER) == null ? "" : webReq.getHeader(CORRELATION_HEADER));
-        final String reqHeader = (webReq.getHeader(REQUEST_HEADER) == null ? "" : webReq.getHeader(REQUEST_HEADER));
-        if (orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
+        final String orgHeader = webReq.getHeader(ORG_HDR);
+        final String corHeader = webReq.getHeader(COR_HDR);
+        final String reqHeader = webReq.getHeader(REQ_HDR);
+        if (orgHeader== null || corHeader == null || reqHeader==null || orgHeader.isEmpty() || corHeader.isEmpty() || reqHeader.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
         }
         String requestId = reqHeader;
+        logPrefix = "deleteItem() - " + "[" + requestId + "] - ";
+
         log.info("{}Processing DELETE /{}/record/{}", logPrefix, pluginId, recordId);
         log.debug("{}JSON Data: {}", logPrefix, request);
         JSONDeleteResponse jsonResponse = new JSONDeleteResponse(requestId);
@@ -251,39 +258,31 @@ public class APIController {
     private PlatformPlugin getPlugin(String pluginId) {
         final String logPrefix = "getPlugin() - ";
         log.trace("{}Entering method", logPrefix);
-        PlatformPlugin resp = new PlatformPlugin();
 
         RegisteredPlugin rp = pluginManagement.getPluginByName(pluginId);
         if (rp == null) {
             log.error("{}Plugin {} does not exist", logPrefix, pluginId);
-            resp.errorMessage = "Plugin " + pluginId + " does not exist";
-            resp.success = false;
-            resp.plugin = null;
+            return new PlatformPlugin (null, false, "Plugin " + pluginId + " does not exist");
         }
         else if (!rp.getState().equalsIgnoreCase("STARTED")) {
             log.error("{}Plugin {} is not started", logPrefix, pluginId);
-            resp.errorMessage = "Plugin " + pluginId + " is not running";
-            resp.success = false;
-            resp.plugin = null;
+            return new PlatformPlugin (null, false, "Plugin " + pluginId + " is not running");
         }
         else if (rp.getHealth().getOverallStatus().getHealthState() == HealthState.FAILED) {
             log.error("{}Plugin {} is failed - {}", logPrefix, pluginId, rp.getHealth().getOverallStatus().getHealthComment());
-            resp.errorMessage = "Plugin " + pluginId + " is failed - " + rp.getHealth().getOverallStatus().getHealthComment();
-            resp.success = false;
-            resp.plugin = null;
+            return new PlatformPlugin (null, false,  "Plugin " + pluginId + " is failed - " + rp.getHealth().getOverallStatus().getHealthComment());
         }
         else {
-            resp.success = true;
-            resp.plugin = rp.getPlugin();
+            return new PlatformPlugin (rp.getPlugin(), true, null);
         }
-        return resp;
     }
 
+    @AllArgsConstructor
     private class PlatformPlugin {
 
-        public PlatformConnectorPlugin plugin;
-        public boolean success;
-        public String errorMessage;
+        public final PlatformConnectorPlugin plugin;
+        public final boolean success;
+        public final String errorMessage;
     }
 
 }

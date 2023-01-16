@@ -19,6 +19,7 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.dto.response;
 
+import java.io.Serializable;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,7 +36,7 @@ import lombok.experimental.Accessors;
 @ToString(callSuper=true)
 public class JSONCreateResponse extends JSONResponse {
 
-    private Map<String, Object> objectDetails;
+    private Map<String, Serializable> objectDetails;
 
     public JSONCreateResponse(String requestId) {
         super(requestId);

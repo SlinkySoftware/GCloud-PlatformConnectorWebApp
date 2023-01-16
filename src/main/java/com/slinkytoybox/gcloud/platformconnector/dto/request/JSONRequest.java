@@ -30,5 +30,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public abstract class JSONRequest implements Serializable {
-
+    
+    private String flowId;
+    
 }

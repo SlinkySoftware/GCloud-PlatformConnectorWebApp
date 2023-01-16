@@ -36,7 +36,7 @@ public abstract class JSONResponse implements Serializable {
     private String objectId = null;
     private String errorMessage = null;
 
-    public JSONResponse(String requestId) {
+    protected JSONResponse(String requestId) {
         if (requestId == null) {
             throw new IllegalArgumentException("RequestID cannot be null");
         }

@@ -13,7 +13,7 @@
     <artifactId>platformconnector</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     
-    <name>Genesys Cloud Platform Connector</name>
+    <name>Genesys Cloud Platform Connector Web Application</name>
     <description>Extensible connector for interfacing Genesys cloud to internal systems</description>
     
     <url>https://github.com/SlinkySoftware/GCloud-PlatformConnector</url>
