@@ -109,8 +109,8 @@ public class APIController {
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
                     returnStatus = HttpStatus.NOT_FOUND;
                     break;
-                case DUPLICATE:
-                    log.error("{}Duplicate records found", logPrefix);
+                case MULTIPLE_RECORDS:
+                    log.error("{}Multiple records found", logPrefix);
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
                     returnStatus = HttpStatus.MULTIPLE_CHOICES;
                     break;
@@ -226,8 +226,8 @@ public class APIController {
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
                     returnStatus = HttpStatus.NOT_FOUND;
                     break;
-                case DUPLICATE:
-                    log.error("{}Duplicate records found", logPrefix);
+                case MULTIPLE_RECORDS:
+                    log.error("{}Multiple records found", logPrefix);
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
                     returnStatus = HttpStatus.MULTIPLE_CHOICES;
                     break;
