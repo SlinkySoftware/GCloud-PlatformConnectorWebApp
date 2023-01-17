@@ -116,7 +116,7 @@ public class APIController {
                     break;
                 case FAILURE:
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    //fallthrough
+                //fallthrough
                 default:
                     log.error("{}Failure updating record", logPrefix);
                     returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -131,8 +131,8 @@ public class APIController {
 
     }
 
-    @PostMapping("/{pluginId}/record/{recordId}")
-    public ResponseEntity<JSONResponse> createItem(WebRequest webReq, @PathVariable("pluginId") String pluginId, @PathVariable("recordId") String recordId, @RequestBody JSONCreateRequest request) {
+    @PostMapping("/{pluginId}/record/")
+    public ResponseEntity<JSONResponse> createItem(WebRequest webReq, @PathVariable("pluginId") String pluginId, @RequestBody JSONCreateRequest request) {
         String logPrefix = "createItem() - ";
         log.trace("{}Entering method", logPrefix);
         HeaderDetails hdr = new HeaderDetails(webReq);
@@ -142,7 +142,7 @@ public class APIController {
         String requestId = hdr.reqHeader;
         logPrefix = "createItem() - " + "[" + requestId + "] - ";
 
-        log.info("{}Processing POST /{}/record/{}", logPrefix, pluginId, recordId);
+        log.info("{}Processing POST /{}/record/", logPrefix, pluginId);
         log.debug("{}JSON Data: {}", logPrefix, request);
         JSONCreateResponse jsonResponse = new JSONCreateResponse(requestId);
         jsonResponse.setPluginId(pluginId);
@@ -151,8 +151,41 @@ public class APIController {
         if (check != null) {
             return check;
         }
+        HttpStatus returnStatus;
+        try {
+            CreateRequest pluginRequest = new CreateRequest();
+            pluginRequest.setRequestId(requestId);
+            pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
+            pluginRequest.setObjectDetails(request.getNewDetails());
+            CreateResponse pluginResponse = (CreateResponse) plug.plugin.getResponseFromRequest(pluginRequest);
+            switch (pluginResponse.getStatus()) {
+                case SUCCESS:
+                    log.info("{}Successfully created item, ID: {}", logPrefix, pluginResponse.getObjectId());
+                    jsonResponse.setObjectId(pluginResponse.getObjectId());
+                    jsonResponse.setObjectDetails(pluginResponse.getObjectDetails());
+                    returnStatus = HttpStatus.OK;
+                    break;
+                case RECORD_NOT_FOUND: // should never get this on create
+                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                //fallthrough
+                case MULTIPLE_RECORDS: // should never get this on create
+                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                //fallthrough
+                case FAILURE:
+                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                //fallthrough
+                default:
+                    log.error("{}Failure creating record", logPrefix);
+                    returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+        catch (Exception ex) {
+            log.error("{}Exception when creating record", logPrefix, ex);
+            jsonResponse.setErrorMessage(ex.getMessage());
+            returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return ResponseEntity.status(returnStatus).body(jsonResponse);
 
-        return null;
     }
 
     @DeleteMapping("/{pluginId}/record/{recordId}")
@@ -175,8 +208,43 @@ public class APIController {
         if (check != null) {
             return check;
         }
-
-        return null;
+        HttpStatus returnStatus;
+        try {
+            DeleteRequest pluginRequest = new DeleteRequest();
+            pluginRequest.setRequestId(requestId);
+            pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
+            pluginRequest.setObjectId(recordId);
+            DeleteResponse pluginResponse = (DeleteResponse) plug.plugin.getResponseFromRequest(pluginRequest);
+            switch (pluginResponse.getStatus()) {
+                case SUCCESS:
+                    log.info("{}Successfully created item, ID: {}", logPrefix, pluginResponse.getObjectId());
+                    jsonResponse.setObjectId(pluginResponse.getObjectId());
+                    returnStatus = HttpStatus.OK;
+                    break;
+                 case RECORD_NOT_FOUND:
+                    log.error("{}Could not find record", logPrefix);
+                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                    returnStatus = HttpStatus.NOT_FOUND;
+                    break;
+                case MULTIPLE_RECORDS:
+                    log.error("{}Multiple records found", logPrefix);
+                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                    returnStatus = HttpStatus.MULTIPLE_CHOICES;
+                    break;
+                case FAILURE:
+                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                //fallthrough
+                default:
+                    log.error("{}Failure creating record", logPrefix);
+                    returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+        catch (Exception ex) {
+            log.error("{}Exception when deleting record", logPrefix, ex);
+            jsonResponse.setErrorMessage(ex.getMessage());
+            returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return ResponseEntity.status(returnStatus).body(jsonResponse);
     }
 
     private ResponseEntity<JSONResponse> doSearch(WebRequest webReq, String pluginId, JSONReadRequest request, String recordId) {
@@ -233,7 +301,7 @@ public class APIController {
                     break;
                 case FAILURE:
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    //fallthrough
+                //fallthrough
                 default:
                     log.error("{}Failure looking up record", logPrefix);
                     returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
