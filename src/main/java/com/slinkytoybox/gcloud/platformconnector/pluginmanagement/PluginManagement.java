@@ -42,6 +42,9 @@ public class PluginManagement {
 
     @Autowired
     private SpringPluginManager pluginManager;
+    
+    @Autowired
+    private PluginCallback pluginCallback;
 
     private final Map<String, RegisteredPlugin> pluginMap = new HashMap<>();
 
@@ -49,6 +52,7 @@ public class PluginManagement {
     public Map<String, RegisteredPlugin> getAllPlugins() {
         final String logPrefix = "getAllPlugins() - ";
         log.trace("{}Entering Method", logPrefix);
+        pluginCallback.setPluginManagement(this);
         log.debug("{}Getting all registered plugins", logPrefix);
         pluginMap.clear();
         for (PluginWrapper plug : pluginManager.getPlugins()) {
@@ -72,6 +76,10 @@ public class PluginManagement {
                     .setProvider(plug.getDescriptor().getProvider())
                     .setState(plug.getPluginState().name())
                     ;
+            if (pcp != null) {
+                log.trace("{}Setting callback interface to plugin", logPrefix);
+                pcp.setContainerInterface(pluginCallback);
+            }
             pluginMap.put(pluginId, rp);
         }
         log.info("{}Found {} registered plugins", logPrefix, pluginMap.size());

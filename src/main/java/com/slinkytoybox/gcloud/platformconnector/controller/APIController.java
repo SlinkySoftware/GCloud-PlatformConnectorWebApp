@@ -116,6 +116,7 @@ public class APIController {
                     break;
                 case FAILURE:
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                    //fallthrough
                 default:
                     log.error("{}Failure updating record", logPrefix);
                     returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -232,6 +233,7 @@ public class APIController {
                     break;
                 case FAILURE:
                     jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                    //fallthrough
                 default:
                     log.error("{}Failure looking up record", logPrefix);
                     returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
