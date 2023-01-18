@@ -52,7 +52,7 @@ public class MonitoringLogic {
         Map<String, RegisteredPlugin> allPlugins = pluginManagement.getAllPlugins();
 
         List<PluginDiscoveryResponse> discoveryResponse = new ArrayList<>();
-        allPlugins.keySet().forEach((plugName) -> {
+        allPlugins.keySet().forEach(plugName -> {
             log.trace("{}Adding Plugin {} to the discovery set", logPrefix, plugName);
             discoveryResponse.add(new PluginDiscoveryResponse()
                     .setPluginId(plugName));
