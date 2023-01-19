@@ -41,6 +41,14 @@ public class HealthController {
     @Autowired
     private MonitoringLogic monitoringLogic;
 
+    @GetMapping(path = "/discovery", produces = "application/json")
+    public ResponseEntity<List<DiscoveryResponse>> getHealthDiscovery() {
+        final String logPrefix = "getHealthDiscovery() - ";
+        log.trace("{}Entering method", logPrefix);
+        log.info("{}Getting Zabbix discovery records", logPrefix);
+        return ResponseEntity.ok(monitoringLogic.getDiscovery());
+    }
+
     @GetMapping(path = "/discovery/plugins", produces = "application/json")
     public ResponseEntity<List<PluginDiscoveryResponse>> getHealthPluginDiscovery() {
         final String logPrefix = "getHealthPluginDiscovery() - ";

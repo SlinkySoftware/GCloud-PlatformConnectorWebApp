@@ -26,6 +26,9 @@ import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthMetric;
 import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthResult;
 import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthState;
 import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthStatus;
+import java.io.Serializable;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +48,17 @@ public class MonitoringLogic {
 
     @Autowired
     private PluginManagement pluginManagement;
+
+    public List<DiscoveryResponse> getDiscovery() {
+        final String logPrefix = "getPluginDiscovery() - ";
+        log.trace("{}Entering method", logPrefix);
+        log.info("{}Creating super discovery map", logPrefix);
+        List<DiscoveryResponse> outputList = new ArrayList<>();
+        outputList.addAll(getPluginDiscovery());
+        outputList.addAll(getComponentDiscovery());
+        outputList.addAll(getMetricDiscovery());
+        return outputList;
+    }
 
     public List<PluginDiscoveryResponse> getPluginDiscovery() {
         final String logPrefix = "getPluginDiscovery() - ";
@@ -78,7 +92,7 @@ public class MonitoringLogic {
                         log.trace("{}Adding component {} to the dicovery set", logPrefix, componentName);
                         discoveryResponse.add(new ComponentDiscoveryResponse()
                                 .setPluginId(plugName)
-                                .setComponentName(plugName + "::" + componentName)
+                                .setComponentName(componentName)
                         );
                     }
                     );
@@ -105,12 +119,21 @@ public class MonitoringLogic {
                 if (health.getMetrics() != null) {
                     log.trace("{}Iterating available metrics", logPrefix);
                     for (HealthMetric metric : health.getMetrics()) {
-                        log.trace("{}Adding metric  {} to the dicovery set", logPrefix, metric.getMetricName());
+                        String metricType = "text";
+                        if (metric.getMetricValue() instanceof Integer || metric.getMetricValue() instanceof Long) {
+                            metricType = "int";
+                        }
+                        else if (metric.getMetricValue() instanceof Double || metric.getMetricValue() instanceof Float) {
+                            metricType = "float";
+                        }
+                        log.trace("{}Adding {} metric {} to the dicovery set", logPrefix, metricType, metric.getMetricName());
                         discoveryResponse.add(new MetricDiscoveryResponse()
                                 .setPluginId(plugName)
-                                .setMetricName(plugName + "::" + metric.getMetricName())
+                                .setMetricName(metric.getMetricName())
+                                .setMetricType(metricType)
                         );
                     }
+
                 }
                 else {
                     log.trace("{}No metrics available for {}", logPrefix, plugName);
@@ -144,21 +167,42 @@ public class MonitoringLogic {
                 if (health.getOverallStatus().getHealthState() != HealthState.HEALTHY) {
                     overall.setAllPluginsHealthy(false);
                 }
-                phr.setOverallHeatlh(health.getOverallStatus());
-                List<HealthMetric> hm = new ArrayList<>();
+                phr.setOverallHealth(health.getOverallStatus());
+
+                Map<String, Map<String, Serializable>> healthMap = new HashMap<>();
+
+                Map<String, Serializable> integerMap = new HashMap<>();
+                Map<String, Serializable> floatMap = new HashMap<>();
+                Map<String, Serializable> stringMap = new HashMap<>();
+
                 if (health.getMetrics() != null) {
                     for (HealthMetric m : health.getMetrics()) {
-                        hm.add(new HealthMetric().setMetricName(plugName + "::" + m.getMetricName()).setMetricValue(m.getMetricValue()));
+                        if (m.getMetricValue() instanceof Integer || m.getMetricValue() instanceof Long) {
+                            integerMap.put(m.getMetricName(), m.getMetricValue());
+                        }
+                        else if (m.getMetricValue() instanceof Double || m.getMetricValue() instanceof Float) {
+                            floatMap.put(m.getMetricName(), m.getMetricValue());
+                        }
+                        else if (m.getMetricValue() instanceof Temporal) {
+                            String format = DateTimeFormatter.ISO_DATE_TIME.format((Temporal) m.getMetricValue());
+                            stringMap.put(m.getMetricName(), format);
+                        }
+                        else {
+                            stringMap.put(m.getMetricName(), m.getMetricValue());
+                        }
                     }
                 }
-                log.debug("{}Added metrics: {}", logPrefix, hm);
-                phr.setMetrics(hm);
+                healthMap.put("float", floatMap);
+                healthMap.put("text", stringMap);
+                healthMap.put("int", integerMap);
+
+                log.debug("{}Added metrics: {}", logPrefix, healthMap);
+                phr.setMetrics(healthMap);
 
                 log.debug("{}Checking components", logPrefix);
-                Map<String, HealthStatus> componentStatus = new HashMap<>();
+                Map<String, HealthStatus> componentStatus = health.getComponentStatus();
                 if (health.getComponentStatus() != null) {
-                    health.getComponentStatus().forEach((compName, compStatus) -> {
-                        componentStatus.put(plugName + "::" + compName, compStatus);
+                    health.getComponentStatus().values().forEach(compStatus -> {
                         if (compStatus.getHealthState() != HealthState.HEALTHY) {
                             overall.setAllPluginsHealthy(false);
                         }

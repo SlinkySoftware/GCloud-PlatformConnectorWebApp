@@ -30,12 +30,18 @@ import lombok.experimental.Accessors;
  */
 @Data
 @Accessors(chain = true)
-public class MetricDiscoveryResponse implements Serializable {
-  
+public class MetricDiscoveryResponse implements Serializable, DiscoveryResponse {
+
     @JsonProperty("{#PLUGINID}")
     private String pluginId;
-    
+
     @JsonProperty("{#METRICNAME}")
     private String metricName;
-    
+
+    @JsonProperty("{#METRICTYPE}")
+    private String metricType;
+
+    @JsonProperty("{#DISCOVERYTYPE}")
+    private String discoveryType = "metric";
+
 }

@@ -30,7 +30,7 @@ import lombok.experimental.Accessors;
  */
 @Data
 @Accessors(chain = true)
-public class ComponentDiscoveryResponse implements Serializable {
+public class ComponentDiscoveryResponse implements Serializable, DiscoveryResponse {
   
     @JsonProperty("{#PLUGINID}")
     private String pluginId;
@@ -38,5 +38,7 @@ public class ComponentDiscoveryResponse implements Serializable {
     @JsonProperty("{#COMPONENTNAME}")
     private String componentName;
     
+    @JsonProperty("{#DISCOVERYTYPE}")
+    private String discoveryType = "component";
     
 }

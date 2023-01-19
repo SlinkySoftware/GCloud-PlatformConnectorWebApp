@@ -1,5 +1,5 @@
 /*
- *   platformconnector - PluginDiscoveryResponse.java
+ *   platformconnector - DiscoveryResponse.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -19,23 +19,10 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.dto.response.monitoring;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
-import lombok.Data;
-import lombok.experimental.Accessors;
-
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-@Data
-@Accessors(chain = true)
-public class PluginDiscoveryResponse implements Serializable, DiscoveryResponse {
-  
-    @JsonProperty("{#PLUGINID}")
-    private String pluginId;
-    
-    @JsonProperty("{#DISCOVERYTYPE}")
-    private String discoveryType = "plugin";
+public interface DiscoveryResponse {
     
 }

@@ -19,10 +19,8 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.dto.response.monitoring;
 
-import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthMetric;
 import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthStatus;
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -35,8 +33,8 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class PluginHealthResponse implements Serializable {
 
-    private HealthStatus overallHeatlh;
+    private HealthStatus overallHealth;
     private Map<String, HealthStatus> components;
-    private List<HealthMetric> metrics;
+    private Map<String, Map<String, Serializable>> metrics;
 
 }
