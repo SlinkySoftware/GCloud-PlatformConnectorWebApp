@@ -25,6 +25,7 @@ import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.PluginManageme
 import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.RegisteredPlugin;
 import com.slinkytoybox.gcloud.platformconnectorplugin.PlatformConnectorPlugin;
 import com.slinkytoybox.gcloud.platformconnectorplugin.PluginOperation;
+import com.slinkytoybox.gcloud.platformconnectorplugin.SourceContainer;
 import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthState;
 import com.slinkytoybox.gcloud.platformconnectorplugin.request.*;
 import com.slinkytoybox.gcloud.platformconnectorplugin.response.*;
@@ -289,6 +290,30 @@ public class PluginLogic {
             returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         return ResponseEntity.status(returnStatus).body(jsonResponse);
+    }
+
+    public SourceContainer getSourceCode(String pluginId) {
+        String logPrefix = "getSourceCode() - ";
+        log.trace("{}Entering method", logPrefix);
+
+        PlatformPlugin plug = getPlugin(pluginId);
+        if (!plug.success) {
+            log.error("{}Plugin {} is not operational: {}", logPrefix, pluginId, plug.errorMessage);
+            return null;
+        }
+        return plug.plugin.getSourceCode();
+    }
+
+    public boolean isSourceAvailable(String pluginId) {
+        String logPrefix = "isSourceAvailable() - ";
+        log.trace("{}Entering method", logPrefix);
+
+        PlatformPlugin plug = getPlugin(pluginId);
+        if (!plug.success) {
+            log.error("{}Plugin {} is not operational: {}", logPrefix, pluginId, plug.errorMessage);
+            return false;
+        }
+        return plug.plugin.isSourceAvailable();
     }
 
     private PlatformPlugin getPlugin(String pluginId) {

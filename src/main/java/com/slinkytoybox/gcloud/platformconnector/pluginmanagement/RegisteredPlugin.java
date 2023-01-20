@@ -31,7 +31,7 @@ import lombok.experimental.Accessors;
  */
 @Data
 @Accessors(chain = true)
-@ToString(exclude = {"plugin", "wrapper"})
+@ToString(exclude = {"plugin"})
 public class RegisteredPlugin {
 
     private PlatformConnectorPlugin plugin;
@@ -42,4 +42,5 @@ public class RegisteredPlugin {
     private String provider;
     private String cls;
     private String state;
+    private boolean sourceAvailable;
 }

@@ -33,7 +33,7 @@
         <br/>
         <h2>Loaded Plugins</h2>
         <table border="1" cellpadding="4">
-            <tr><th>Plugin ID</th><th>Version</th><th>Description</th><th>Provider</th><th>State</th><th>Overall Health</th><th>Action</th></tr>
+            <tr><th>Plugin ID</th><th>Version</th><th>Description</th><th>Provider</th><th>State</th><th>Overall Health</th><th>Action</th><th>Source Code</th></tr>
             <tr th:each="plugin: ${plugins}">
                 <td th:text="${plugin.id}"/>
                 <td th:text="${plugin.version}"/>
@@ -46,7 +46,7 @@
                     <button type="button" th:if="${plugin.state == 'STARTED'}" th:data-id="${plugin.id}" th:onclick="changeState(2, this.getAttribute('data-id'));">Stop</button>
                     <button type="button" th:if="${plugin.state == 'STOPPED'}" th:data-id="${plugin.id}" th:onclick="changeState(0, this.getAttribute('data-id'));">Unload</button>
                 </td>
-
+                <td><a th:if="${plugin.sourceAvailable == true}" th:href="${'/source/' + plugin.id + '/code'}">Download</a></td>
             </tr>
         </table><br/>
         <h2>Load New Plugin</h2>

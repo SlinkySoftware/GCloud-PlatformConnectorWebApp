@@ -19,8 +19,11 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.controller;
 
+import com.slinkytoybox.gcloud.platformconnector.businesslogic.PluginLogic;
+import com.slinkytoybox.gcloud.platformconnectorplugin.SourceContainer;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -29,17 +32,20 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-
 @Controller
 @Slf4j
 @RequestMapping("/source")
 public class SourceController {
+
+    @Autowired
+    private PluginLogic pluginLogic;
 
     @Value("${git.commit.id.abbrev}")
     private String gitCommitIdAbbrev;
@@ -70,5 +76,30 @@ public class SourceController {
         headers.setContentLength(sourceCode.length);
         log.debug("{}Streaming result to browser: {}", logPrefix, headers);
         return new ResponseEntity<>(sourceCode, headers, HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/{pluginId}/code", produces = "application/java-archive")
+    public ResponseEntity<byte[]> sourceCodePluginGet(@PathVariable("pluginId") String pluginId) throws IOException {
+        final String logPrefix = "sourceCodeGet() - ";
+        log.trace("{}Entering method", logPrefix);
+        SourceContainer sc = pluginLogic.getSourceCode(pluginId);
+        if (sc == null) {
+            log.error("{}Source object could not be loaded", logPrefix);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+        else if (!sc.isUsesAGPL()) {
+            log.error("{}Source not AGPL. Nothing to return", logPrefix);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+        else if (sc.getSourceFileName() == null || sc.getSourceFileName().isEmpty() || sc.getSourceJar().length == 0) {
+            log.error("{}Source not found", logPrefix);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.valueOf("application/java-archive"));
+        headers.setContentDisposition(ContentDisposition.attachment().filename(sc.getSourceFileName()).build());
+        headers.setContentLength(sc.getSourceJar().length);
+        log.debug("{}Streaming result to browser: {}", logPrefix, headers);
+        return new ResponseEntity<>(sc.getSourceJar(), headers, HttpStatus.OK);
     }
 }
