@@ -1,0 +1,1 @@
+java -cp platformconnector-0.0.1.jar "-Dloader.path=lib" org.springframework.boot.loader.PropertiesLauncher

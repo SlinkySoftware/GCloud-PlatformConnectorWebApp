@@ -31,11 +31,16 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class PluginDiscoveryResponse implements Serializable, DiscoveryResponse {
-  
+
     @JsonProperty("{#PLUGINID}")
     private String pluginId;
-    
+
     @JsonProperty("{#DISCOVERYTYPE}")
     private String discoveryType = "plugin";
-    
+
+    // This is here because of the way Zabbix filtering is set up, it complains when the 
+    // JsonProperty is missing from Components and plugins, when trying to filter for real metrics
+    @JsonProperty("{#METRICTYPE}")
+    private String metricType = "NOT_A_METRIC";
+
 }
