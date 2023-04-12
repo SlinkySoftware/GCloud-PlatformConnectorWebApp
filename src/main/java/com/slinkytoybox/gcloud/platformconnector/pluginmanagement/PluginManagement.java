@@ -32,11 +32,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.pf4j.PluginWrapper;
 import org.pf4j.spring.SpringPluginManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
+@Component
 @Slf4j
 public class PluginManagement {
 

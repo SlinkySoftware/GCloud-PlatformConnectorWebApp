@@ -21,13 +21,11 @@ package com.slinkytoybox.gcloud.platformconnector.controller;
 
 import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.PluginManagement;
 import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.RegisteredPlugin;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -47,9 +45,6 @@ import org.springframework.web.context.request.WebRequest;
 @RequestMapping("/plugins")
 
 public class PluginController {
-
-    @Autowired
-    private Environment env;
 
     @Autowired
     private PluginManagement pluginManagement;
