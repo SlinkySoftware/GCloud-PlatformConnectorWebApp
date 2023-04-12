@@ -42,14 +42,14 @@ public class PluginManagement {
 
     @Autowired
     private SpringPluginManager pluginManager;
-    
+
     @Autowired
     private PluginCallback pluginCallback;
 
     private final Map<String, RegisteredPlugin> pluginMap = new HashMap<>();
 
     @PostConstruct
-    public Map<String, RegisteredPlugin> getAllPlugins() {
+    public synchronized Map<String, RegisteredPlugin> getAllPlugins() {
         final String logPrefix = "getAllPlugins() - ";
         log.trace("{}Entering Method", logPrefix);
         pluginCallback.setPluginManagement(this);
@@ -75,19 +75,19 @@ public class PluginManagement {
                     .setCls(plug.getDescriptor().getPluginClass())
                     .setProvider(plug.getDescriptor().getProvider())
                     .setState(plug.getPluginState().name())
-                    .setSourceAvailable(pcp == null ? false : pcp.isSourceAvailable())
-                    ;
+                    .setSourceAvailable(pcp == null ? false : pcp.isSourceAvailable());
             if (pcp != null) {
                 log.trace("{}Setting callback interface to plugin", logPrefix);
                 pcp.setContainerInterface(pluginCallback);
             }
             pluginMap.put(pluginId, rp);
         }
+
         log.info("{}Found {} registered plugins", logPrefix, pluginMap.size());
         return pluginMap;
     }
 
-    public RegisteredPlugin getPluginByName(String pluginName) {
+    public synchronized RegisteredPlugin getPluginByName(String pluginName) {
         final String logPrefix = "getPluginByName() - ";
         log.trace("{}Entering Method", logPrefix);
         log.debug("{}Finding plugin {}", logPrefix, pluginName);
@@ -100,7 +100,7 @@ public class PluginManagement {
         }
     }
 
-    public boolean startPlugin(String pluginName) {
+    public synchronized boolean startPlugin(String pluginName) {
         final String logPrefix = "startPlugin() - ";
         log.trace("{}Entering Method", logPrefix);
         log.debug("{}Finding plugin {}", logPrefix, pluginName);
@@ -116,7 +116,7 @@ public class PluginManagement {
         }
     }
 
-    public boolean stopPlugin(String pluginName) {
+    public synchronized boolean stopPlugin(String pluginName) {
         final String logPrefix = "stopPlugin() - ";
         log.trace("{}Entering Method", logPrefix);
         log.debug("{}Finding plugin {}", logPrefix, pluginName);
@@ -132,7 +132,7 @@ public class PluginManagement {
         }
     }
 
-    public boolean unloadPlugin(String pluginName) {
+    public synchronized boolean unloadPlugin(String pluginName) {
         final String logPrefix = "unloadPlugin() - ";
         log.trace("{}Entering Method", logPrefix);
         log.debug("{}Finding plugin {}", logPrefix, pluginName);
@@ -155,14 +155,14 @@ public class PluginManagement {
         }
     }
 
-    public boolean loadPlugin(String pluginFile) {
+    public synchronized boolean loadPlugin(String pluginFile) {
         final String logPrefix = "loadPlugin() - ";
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Attempting to load {}", logPrefix, pluginFile);
         Path plugPath = Path.of("plugins/" + pluginFile);
         String ret = pluginManager.loadPlugin(plugPath);
         log.info("{}Load Plugin returned: {}", logPrefix, ret);
-         return true;
+        return true;
     }
 
 }
