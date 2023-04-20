@@ -56,7 +56,9 @@ public class GCloudAPIConnection {
 
     private final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.ENGLISH);
 
-
+    private String platformGuid;
+    
+    
     @PostConstruct
     private void init() throws SQLException {
         final String logPrefix = "init() - ";
@@ -71,7 +73,7 @@ public class GCloudAPIConnection {
 
         log.debug("{}Getting list of cloud plaforms from Database", logPrefix);
 
-        String platformSql = "SELECT Id, Name, OrganisationName, OrganisationId, ApiRegion, ApiClientId, ApiClientSecret, AzureAdAccessGroup FROM COM_CLOUD_PLATFORM WHERE Enabled = 1 AND Id=?";
+        String platformSql = "SELECT Id, Name, OrganisationName, OrganisationId, OrganisationGuid, ApiRegion, ApiClientId, ApiClientSecret, AzureAdAccessGroup FROM COM_CLOUD_PLATFORM WHERE Enabled = 1 AND Id=?";
         try (Connection dbConnection = dbConn.getDatabaseConnection()) {
             try (PreparedStatement ps = dbConnection.prepareStatement(platformSql)) {
                 ps.setLong(1, cloudPlatformId);
@@ -86,7 +88,8 @@ public class GCloudAPIConnection {
                                 .setApiRegion(rs.getNString("ApiRegion"))
                                 .setApiClientId(rs.getNString("ApiClientId"))
                                 .setApiClientSecret(rs.getNString("APIClientSecret"))
-                                .setAzureAdAccessGroup(rs.getNString("AzureAdAccessGroup"));
+                                .setAzureAdAccessGroup(rs.getNString("AzureAdAccessGroup"))
+                                .setOrganisationGuid(rs.getNString("OrganisationGuid"));
                         log.info("{}Got Cloud Platform {} - attempting to connect", logPrefix, cp);
 
                         cp = initCloudPlatform(cp);
@@ -98,6 +101,7 @@ public class GCloudAPIConnection {
                 }
             }
         }
+        this.platformGuid = cp.getOrganisationGuid();
         log.info("{}Cloud Platform {} Initialised", logPrefix, cp);
     }
 
@@ -158,6 +162,10 @@ public class GCloudAPIConnection {
         final String logPrefix = "getCloudPlatform() - ";
         log.trace("{}Entering Method", logPrefix);
         return cp;
+    }
+    
+    public String getPlatformGuid() {
+        return platformGuid;
     }
 
 }

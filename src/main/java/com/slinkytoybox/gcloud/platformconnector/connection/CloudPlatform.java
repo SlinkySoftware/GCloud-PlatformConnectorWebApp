@@ -36,6 +36,7 @@ public class CloudPlatform {
     private String name;
     private String organisationName;
     private String organisationId;
+    private String organisationGuid;
     private String apiRegion;
     private String apiClientId;
     private String apiClientSecret;

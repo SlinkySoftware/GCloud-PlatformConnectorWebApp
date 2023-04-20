@@ -40,7 +40,7 @@ public class APIController {
 
     @Autowired
     private PluginLogic pluginLogic;
-
+    
     @PostMapping("/{pluginId}/record/search")
     public ResponseEntity<JSONResponse> getRecordSearch(WebRequest webReq, @PathVariable("pluginId") String pluginId, @RequestBody JSONReadRequest request) {
         String logPrefix = "getRecordSearch() - ";
