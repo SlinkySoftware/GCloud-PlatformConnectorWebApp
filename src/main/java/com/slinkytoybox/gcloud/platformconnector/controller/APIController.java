@@ -55,7 +55,8 @@ public class APIController {
         String logPrefix = "getItemSingle() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Processing GET /{}/record/{}", logPrefix, pluginId, recordId);
-        return pluginLogic.doSearch(webReq, pluginId, null, recordId);
+        //return pluginLogic.doSearch(webReq, pluginId, null, recordId);
+        return ResponseEntity.status(401).body(null);
 
     }
 

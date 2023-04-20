@@ -73,7 +73,7 @@ public class RootController {
         return "GCloud-PlatformConnector";
     }
 
-
+    
     @GetMapping(value="/version", produces="text/plain;charset=UTF-8")
     public @ResponseBody String version(WebRequest request) {
         final String logPrefix = "version() - ";
