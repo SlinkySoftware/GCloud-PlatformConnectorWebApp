@@ -60,8 +60,6 @@ public class GCloudAPIConnection {
 
     private CloudPlatform cp = null;
 
-    private final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.ENGLISH);
-
     private String platformGuid;
     
     

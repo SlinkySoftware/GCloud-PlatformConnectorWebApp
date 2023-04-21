@@ -75,7 +75,7 @@ public class PluginManagement {
                     .setCls(plug.getDescriptor().getPluginClass())
                     .setProvider(plug.getDescriptor().getProvider())
                     .setState(plug.getPluginState().name())
-                    .setSourceAvailable(pcp == null ? false : pcp.isSourceAvailable())
+                    .setSourceAvailable(pcp != null && pcp.isSourceAvailable())
                     ;
             if (pcp != null) {
                 log.trace("{}Setting callback interface to plugin", logPrefix);

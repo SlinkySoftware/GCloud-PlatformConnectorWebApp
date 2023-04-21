@@ -252,9 +252,9 @@
             </plugin>
             
             <!-- This plugin will copy configuration files to the target directory. Put them in /config, which is excluded from Git. -->
-            <!-- <plugin>
+             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <id>copy-resource-one</id>
@@ -270,44 +270,16 @@
                                     <directory>/config</directory>
                                     <includes>
                                         <include>application.properties</include>
-                                        <include>azuread.cer</include>
-                                        <include>adfs.cer</include>
-                                        <include>okta.cer</include>
                                     </includes>
                                 </resource>
                             </resources>
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
         </plugins>
     </build>
     
-    
-    <!--    <repositories>
-        <repository>
-            <id>shibboleth_repository</id>
-            <name>Shibboleth Maven Repository</name>
-            <url>https://build.shibboleth.net/nexus/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>shibboleth_repository_2</id>
-            <name>Shibboleth Maven Repository (https://mvnrepository.com/artifact/org.opensaml/opensaml-core/4.1.1)</name>
-            <url>https://build.shibboleth.net/maven/releases/</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>shibboleth_repository</id>
-            <name>Shibboleth Maven Repository</name>
-            <url>https://build.shibboleth.net/nexus/content/repositories/releases/</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>shibboleth_repository_2</id>
-            <name>Shibboleth Maven Repository (https://mvnrepository.com/artifact/org.opensaml/opensaml-core/4.1.1)</name>
-            <url>https://build.shibboleth.net/maven/releases/</url>
-        </pluginRepository>
-    </pluginRepositories> -->
     
       <repositories>
     <repository>
