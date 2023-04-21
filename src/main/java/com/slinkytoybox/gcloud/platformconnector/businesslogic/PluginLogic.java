@@ -70,7 +70,7 @@ public class PluginLogic {
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
 
         }
         String requestId = hdr.reqHeader;
@@ -130,7 +130,7 @@ public class PluginLogic {
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
 
         }
         String requestId = hdr.reqHeader;
@@ -197,7 +197,7 @@ public class PluginLogic {
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
 
         }
         String requestId = hdr.reqHeader;
@@ -271,7 +271,7 @@ public class PluginLogic {
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
         }
         String requestId = hdr.reqHeader;
         logPrefix = "deleteItem() - " + "[" + requestId + "] - ";

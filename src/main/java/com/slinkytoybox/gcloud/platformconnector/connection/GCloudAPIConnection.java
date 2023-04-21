@@ -46,8 +46,14 @@ public class GCloudAPIConnection {
     @Autowired
     private CloudDatabaseConnection dbConn;
 
-    @Value("${genesys.cloud.api-timeout:5000}")
+    @Value("${genesys.cloud.api-timeout:10000}")
     private Integer apiTimeout;
+    
+    @Value("${genesys.cloud.max-retry-sec:5}")
+    private Integer maxRetrySec;
+    
+    @Value("${genesys.cloud.max-retry-count:3}")
+    private Integer maxRetryCount;
 
     @Value("${cloud.platform.id:-1}")
     private Long cloudPlatformId;
@@ -123,15 +129,19 @@ public class GCloudAPIConnection {
             throw new IllegalArgumentException("Invalid Genesys cloud region", ex);
         }
         log.info("{}Genesys Cloud '{}' -> Client ID: {} @ Region: {}", logPrefix, cp.getOrganisationName(), cp.getApiClientId(), cp.getApiRegion());
+        ApiClient.RetryConfiguration retryConfig = new ApiClient.RetryConfiguration();
+        retryConfig.setMaxRetryTimeSec(maxRetrySec);
+        retryConfig.setRetryMax(maxRetryCount);
         log.debug("{}Building api connection", logPrefix);
         apiClient = ApiClient.Builder
                 .standard()
                 .withBasePath(region)
                 .withUserAgent(USER_AGENT)
                 .withShouldRefreshAccessToken(true)
-                .withDateFormat(dateFormat)
+                //.withDateFormat(dateFormat)
                 .withShouldThrowErrors(true)
                 .withConnectionTimeout(apiTimeout)
+                .withRetryConfiguration(retryConfig)
                 .build();
 
         log.debug("{}Authenticating to Genesys cloud", logPrefix);
@@ -148,11 +158,11 @@ public class GCloudAPIConnection {
 
     }
 
-    public ApiClient getApiClient(Long platformId) {
+    public ApiClient getApiClient() {
         final String logPrefix = "getApiClient() - ";
         log.trace("{}Entering Method", logPrefix);
         if (cp == null) {
-            log.error("{}Cloud platform {} does not exist", logPrefix, platformId);
+            log.error("{}Cloud platform does not exist", logPrefix);
             return null;
         }
         return cp.getApiClient();

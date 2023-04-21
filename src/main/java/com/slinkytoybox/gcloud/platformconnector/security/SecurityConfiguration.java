@@ -19,9 +19,15 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.security;
 
+import com.mypurecloud.sdk.v2.ApiException;
+import com.mypurecloud.sdk.v2.api.IntegrationsApi;
+import com.mypurecloud.sdk.v2.model.Credential;
+import com.mypurecloud.sdk.v2.model.CredentialInfo;
+import com.mypurecloud.sdk.v2.model.CredentialType;
 import com.slinkytoybox.gcloud.platformconnector.connection.CloudDatabaseConnection;
 import com.slinkytoybox.gcloud.platformconnector.connection.GCloudAPIConnection;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -29,10 +35,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -53,17 +63,21 @@ public class SecurityConfiguration {
     private GCloudAPIConnection cloudApi;
 
     private String securePassword = null;
+    
+    @Value("${cloud.credential.id:NOT_SET}")
+    private String credentialId;
+    
 
     @Scheduled(fixedDelayString = "120000", initialDelayString = "60000")
     @PostConstruct
-    public void checkPasswordChanged() {
-        final String logPrefix = "checkPasswordExpiry() - ";
+    public ReadKeyStatus checkPasswordChanged() {
+        final String logPrefix = "checkPasswordChanged() - ";
         log.trace("{}Entering Method", logPrefix);
         String keySql = "SELECT SecureKey, LastUpdated FROM INT_SECURE_KEY WHERE CloudPlatformId=?";
         String tempSecurePassword = "";
         Long cloudPlatformId = cloudApi.getCloudPlatform().getId();
         LocalDateTime lastUpdated = LocalDateTime.MIN;
-
+        ReadKeyStatus result;
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
             try (PreparedStatement ps = dbConnection.prepareStatement(keySql)) {
                 ps.setLong(1, cloudPlatformId);
@@ -75,7 +89,7 @@ public class SecurityConfiguration {
 
                         if (tempSecurePassword.equals(securePassword)) {
                             log.trace("{}Password has not changed, exiting", logPrefix);
-                            return;
+                            return ReadKeyStatus.PASSWORD_NOT_CHANGED;
                         }
                     }
                 }
@@ -85,21 +99,24 @@ public class SecurityConfiguration {
             log.error("{}Exception encountered reading password", logPrefix, ex);
             tempSecurePassword = "";
         }
-
+        result = ReadKeyStatus.PASSWORD_UPDATED;
         if (tempSecurePassword.isEmpty() || lastUpdated == LocalDateTime.MIN) {
             log.warn("{}Password was not retrieved. Forcing a rotate", logPrefix);
-            rotatePassword();
-            return;
+            RotateStatus status = rotatePassword();
+            if (status != RotateStatus.FAILURE) {
+                result = ReadKeyStatus.ROTATED;
+            }
         }
 
         securePassword = tempSecurePassword;
 
         log.debug("{}Using password: {}", logPrefix, securePassword);
         log.trace("{}Leaving method", logPrefix);
-
+        return result;
     }
 
-    public void rotatePassword() {
+    @Scheduled(cron = "${cloud.password.rotate-cron}")
+    public RotateStatus rotatePassword() {
         final String logPrefix = "rotatePassword() - ";
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Rotating cloud password", logPrefix);
@@ -109,21 +126,46 @@ public class SecurityConfiguration {
             securePassword = tempSecurePassword;
             if (!notifyOtherHosts()) {
                 log.error("{}There was an error notifying other hosts. Please check them!");
+                return RotateStatus.ERROR_NOTIFYING_HOSTS;
             }
         }
         else {
             log.warn("{}Password not updated!", logPrefix);
+            return RotateStatus.FAILURE;
         }
         log.debug("{}Using password: {}", logPrefix, securePassword);
         log.trace("{}Leaving method", logPrefix);
+        return RotateStatus.SUCCESS;
     }
 
     private boolean updateCloud(String password) {
         final String logPrefix = "updateCloud() - ";
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Updating password in Genesys Cloud", logPrefix);
-
-        return true;
+        IntegrationsApi intApi = new IntegrationsApi(cloudApi.getApiClient());
+        Credential newCred = new Credential();
+        newCred.setName("AutoRotated-"+ LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+        newCred.setType(new CredentialType().name("userDefined"));
+        Map<String,String> credFields = new HashMap<>();
+        credFields.put("AuthKey", password);
+        newCred.setCredentialFields(credFields);
+        log.trace("{}New Credential {}", logPrefix, newCred);
+        log.debug("{}About to update Genesys Cloud", logPrefix);
+        try {
+            CredentialInfo result = intApi.putIntegrationsCredential(credentialId, newCred);
+            if (result.getId().equalsIgnoreCase(credentialId)) {
+                log.info("{}Credential updated in Genesys Cloud successfully", logPrefix);
+                return true;
+            }
+            else {
+                log.info("{}Credential was not updated correctly", logPrefix);
+                return false;
+            }
+        }
+        catch (ApiException | IOException ex) {
+            log.error("{}An exception was encountered whilst updating the Cloud Credential", logPrefix, ex);
+            return false;
+        }
     }
 
     private boolean savePassword(String password) {
@@ -203,5 +245,19 @@ public class SecurityConfiguration {
 
     public String getCurrentPassword() {
         return securePassword;
+    }
+     
+       
+    public enum RotateStatus {
+        SUCCESS,
+        FAILURE,
+        ERROR_NOTIFYING_HOSTS
+    }
+    
+    public enum ReadKeyStatus {
+        PASSWORD_UPDATED,
+        PASSWORD_NOT_CHANGED,
+        ROTATED,
+        ERROR
     }
 }

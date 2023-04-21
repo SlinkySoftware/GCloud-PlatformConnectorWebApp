@@ -20,6 +20,8 @@
 package com.slinkytoybox.gcloud.platformconnector.controller;
 
 import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration;
+import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration.ReadKeyStatus;
+import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration.RotateStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,14 +41,33 @@ public class SecurityController {
     @Autowired
     private SecurityConfiguration securityConfiguration;
 
-    @PostMapping("/updateKey")
-    public ResponseEntity<String> updateKey() {
-        String logPrefix = "updateKey() - ";
+    @PostMapping("/readKey")
+    public ResponseEntity<String> readKey() {
+        String logPrefix = "readKey() - ";
         log.trace("{}Entering method", logPrefix);
-        log.info("{}Processing POST /security/updateKey", logPrefix);
-
-        return ResponseEntity.ok().body("UPDATED");
-
+        log.info("{}Processing POST /security/readKey", logPrefix);
+        ReadKeyStatus result = securityConfiguration.checkPasswordChanged();
+        if (result == ReadKeyStatus.ERROR) {
+            return ResponseEntity.internalServerError().body(result.name());
+        } else {
+            return ResponseEntity.ok().body(result.name());
+        }
     }
-
+    
+    @PostMapping("/rotateKey") 
+    public ResponseEntity<String> rotateKey() {
+        String logPrefix = "rotateKey() - ";
+        log.trace("{}Entering method", logPrefix);
+        log.info("{}Processing POST /security/rotateKey", logPrefix);
+        RotateStatus status = securityConfiguration.rotatePassword();
+        if (status == RotateStatus.FAILURE) {
+            return ResponseEntity.internalServerError().body(status.name());
+        }
+        else {
+            return ResponseEntity.ok().body(status.name());
+        }
+    }
 }
+        
+
+
