@@ -37,11 +37,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/security")
 public class SecurityController {
-    
+
     @Autowired
     private SecurityConfiguration securityConfiguration;
 
-    @PostMapping("/readKey")
+    @PostMapping(path = "/readKey", produces = "text/plain")
     public ResponseEntity<String> readKey() {
         String logPrefix = "readKey() - ";
         log.trace("{}Entering method", logPrefix);
@@ -49,12 +49,13 @@ public class SecurityController {
         ReadKeyStatus result = securityConfiguration.checkPasswordChanged();
         if (result == ReadKeyStatus.ERROR) {
             return ResponseEntity.internalServerError().body(result.name());
-        } else {
+        }
+        else {
             return ResponseEntity.ok().body(result.name());
         }
     }
-    
-    @PostMapping("/rotateKey") 
+
+    @PostMapping(path = "/rotateKey", produces = "text/plain")
     public ResponseEntity<String> rotateKey() {
         String logPrefix = "rotateKey() - ";
         log.trace("{}Entering method", logPrefix);
@@ -68,6 +69,3 @@ public class SecurityController {
         }
     }
 }
-        
-
-

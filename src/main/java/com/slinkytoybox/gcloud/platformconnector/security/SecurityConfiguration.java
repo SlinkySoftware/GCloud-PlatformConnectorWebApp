@@ -27,13 +27,19 @@ import com.mypurecloud.sdk.v2.model.CredentialType;
 import com.slinkytoybox.gcloud.platformconnector.connection.CloudDatabaseConnection;
 import com.slinkytoybox.gcloud.platformconnector.connection.GCloudAPIConnection;
 import jakarta.annotation.PostConstruct;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -63,10 +69,12 @@ public class SecurityConfiguration {
     private GCloudAPIConnection cloudApi;
 
     private String securePassword = null;
-    
+
     @Value("${cloud.credential.id:NOT_SET}")
     private String credentialId;
-    
+
+    @Value("${server.id:DefaultServerId}")
+    private String serverId;
 
     @Scheduled(fixedDelayString = "120000", initialDelayString = "60000")
     @PostConstruct
@@ -125,7 +133,7 @@ public class SecurityConfiguration {
         if (savePassword(tempSecurePassword)) {
             securePassword = tempSecurePassword;
             if (!notifyOtherHosts()) {
-                log.error("{}There was an error notifying other hosts. Please check them!");
+                log.error("{}There was an error notifying other hosts. Please check them!", logPrefix);
                 return RotateStatus.ERROR_NOTIFYING_HOSTS;
             }
         }
@@ -144,9 +152,9 @@ public class SecurityConfiguration {
         log.info("{}Updating password in Genesys Cloud", logPrefix);
         IntegrationsApi intApi = new IntegrationsApi(cloudApi.getApiClient());
         Credential newCred = new Credential();
-        newCred.setName("AutoRotated-"+ LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+        newCred.setName("AutoRotated-" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
         newCred.setType(new CredentialType().name("userDefined"));
-        Map<String,String> credFields = new HashMap<>();
+        Map<String, String> credFields = new HashMap<>();
         credFields.put("AuthKey", password);
         newCred.setCredentialFields(credFields);
         log.trace("{}New Credential {}", logPrefix, newCred);
@@ -240,20 +248,72 @@ public class SecurityConfiguration {
     }
 
     private boolean notifyOtherHosts() {
-        return true;
+        final String logPrefix = "notifyOtherHosts() - ";
+        log.trace("{}Entering Method", logPrefix);
+        String keySql = "SELECT ServerName, ServerUrl FROM INT_SERVER WHERE ServerName != ?";
+        boolean success = true;
+        try (Connection dbConnection = cdc.getDatabaseConnection()) {
+            try (PreparedStatement ps = dbConnection.prepareStatement(keySql)) {
+                ps.setNString(1, serverId);
+                log.info("{}I am {} - Getting other servers from Database", logPrefix, serverId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        try {
+                            String urlString = rs.getNString("ServerUrl");
+                            String serverName = rs.getNString("ServerName");
+                            log.trace("{}serverName='{}',  urlString='{}'", logPrefix, serverName, urlString);
+                            if (urlString.isBlank() || !urlString.startsWith("http")) {
+                                log.error("{}Server {} URL is invalid: {}", logPrefix, serverName, urlString);
+                                success = false;
+                                continue;
+                            }
+                            urlString += (urlString.endsWith("/") ? "" : "/");
+                            urlString += "security/readKey";
+                            log.debug("{}Forming request for {}", logPrefix, urlString);
+                            URL url = new URL(urlString);
+                            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                            conn.setConnectTimeout(2000);
+                            conn.setReadTimeout(2000);
+                            conn.setRequestMethod("POST");
+                            conn.connect();
+                            int statusCode = conn.getResponseCode();
+                            if (statusCode != 200) {
+                                log.error("{}Received HTTP status code {} from endpoint {}", logPrefix, statusCode, serverName);
+                                success = false;
+                                continue;
+                            }
+                            BufferedReader buff = new BufferedReader(new InputStreamReader((InputStream) conn.getContent()));
+                            String response = buff.readLine();
+
+                            log.debug("{}Successfully notified {}, response {}", logPrefix, serverName, response);
+                        }
+                        catch (SQLException | IOException ex) {
+                            log.error("{}Exception encountered whilst reading or notifying a specific host!", logPrefix, ex);
+                            success = false;
+                        }
+                        log.trace("{}Moving to next record", logPrefix);
+                    }
+                }
+            }
+        }
+        catch (SQLException ex) {
+            log.error("{}Exception encountered reading server list", logPrefix, ex);
+            success = false;
+        }
+        log.info("{}Finished processing all servers. Overall success={}", logPrefix, success);
+        return success;
     }
 
     public String getCurrentPassword() {
         return securePassword;
     }
-     
-       
+
     public enum RotateStatus {
         SUCCESS,
         FAILURE,
         ERROR_NOTIFYING_HOSTS
     }
-    
+
     public enum ReadKeyStatus {
         PASSWORD_UPDATED,
         PASSWORD_NOT_CHANGED,
