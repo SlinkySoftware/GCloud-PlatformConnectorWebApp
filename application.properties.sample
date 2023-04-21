@@ -1,0 +1,18 @@
+@ Set this to a unique name for the server. It should exist in the INT_SERVER table with the URL to the application context
+server.id=PrimaryServer
+
+# JDBC connection properties for MSSQL
+cloud.database.url=jdbc:sqlserver://<hostname>:1433;encrypt=false;databaseName=<DATABASENAME>
+cloud.database.username=<sql user>
+cloud.database.password=<sql password>
+
+# This is the cloud platform as per the COM_CLOUD_PLATFORM database that we are operating on
+cloud.platform.id=1
+
+# This should be set to the GUID of the credential configured for the Integration pointing to this application
+cloud.credential.id=1b0a0464-dd89-4c15-838c-5b09b98bc306
+
+# Cron expression to rotate the password
+cloud.password.rotate-cron=0 0 10 * * ?
+
+

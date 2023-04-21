@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.PluginWrapper;
 import org.pf4j.spring.SpringPluginManager;
@@ -77,7 +77,8 @@ public class PluginManagement {
                     .setCls(plug.getDescriptor().getPluginClass())
                     .setProvider(plug.getDescriptor().getProvider())
                     .setState(plug.getPluginState().name())
-                    .setSourceAvailable(pcp == null ? false : pcp.isSourceAvailable());
+                    .setSourceAvailable(pcp != null && pcp.isSourceAvailable())
+                    ;
             if (pcp != null) {
                 log.trace("{}Setting callback interface to plugin", logPrefix);
                 pcp.setContainerInterface(pluginCallback);

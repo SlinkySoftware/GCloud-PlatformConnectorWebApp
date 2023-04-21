@@ -19,10 +19,12 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.businesslogic;
 
+import com.slinkytoybox.gcloud.platformconnector.connection.GCloudAPIConnection;
 import com.slinkytoybox.gcloud.platformconnector.dto.request.*;
 import com.slinkytoybox.gcloud.platformconnector.dto.response.*;
 import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.PluginManagement;
 import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.RegisteredPlugin;
+import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration;
 import com.slinkytoybox.gcloud.platformconnectorplugin.PlatformConnectorPlugin;
 import com.slinkytoybox.gcloud.platformconnectorplugin.PluginOperation;
 import com.slinkytoybox.gcloud.platformconnectorplugin.SourceContainer;
@@ -52,12 +54,24 @@ public class PluginLogic {
     @Autowired
     private PluginManagement pluginManagement;
 
+    @Autowired
+    private GCloudAPIConnection apiConnection;
+
+    @Autowired
+    private SecurityConfiguration securityConfig;
+
     public ResponseEntity<JSONResponse> doCreate(WebRequest webReq, String pluginId, JSONCreateRequest request) {
         String logPrefix = "doCreate() - ";
         log.trace("{}Entering method", logPrefix);
-        HeaderDetails hdr = new HeaderDetails(webReq);
-        if (hdr.orgHeader.isEmpty() || hdr.corHeader.isEmpty() || hdr.reqHeader.isEmpty()) {
+        SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
+        if (hdr.checkMissingHeaders()) {
+            log.error("{}Authentication headers missing from request", logPrefix);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+        }
+        else if (!hdr.isAuthenticationValid()) {
+            log.error("{}Authentication in request does not match", logPrefix);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+
         }
         String requestId = hdr.reqHeader;
         logPrefix = "createItem() - " + "[" + requestId + "] - ";
@@ -109,9 +123,15 @@ public class PluginLogic {
     public ResponseEntity<JSONResponse> doUpdate(WebRequest webReq, String pluginId, JSONUpdateRequest request, String recordId) {
         String logPrefix = "doUpdate() - ";
         log.trace("{}Entering method", logPrefix);
-        HeaderDetails hdr = new HeaderDetails(webReq);
-        if (hdr.orgHeader.isEmpty() || hdr.corHeader.isEmpty() || hdr.reqHeader.isEmpty()) {
+        SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
+        if (hdr.checkMissingHeaders()) {
+            log.error("{}Authentication headers missing from request", logPrefix);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+        }
+        else if (!hdr.isAuthenticationValid()) {
+            log.error("{}Authentication in request does not match", logPrefix);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+
         }
         String requestId = hdr.reqHeader;
         logPrefix = "doUpdate() - " + "[" + requestId + "] - ";
@@ -170,9 +190,15 @@ public class PluginLogic {
     public ResponseEntity<JSONResponse> doSearch(WebRequest webReq, String pluginId, JSONReadRequest request, String recordId) {
         String logPrefix = "doSearch() - ";
         log.trace("{}Entering method", logPrefix);
-        HeaderDetails hdr = new HeaderDetails(webReq);
-        if (hdr.orgHeader.isEmpty() || hdr.corHeader.isEmpty() || hdr.reqHeader.isEmpty()) {
+        SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
+        if (hdr.checkMissingHeaders()) {
+            log.error("{}Authentication headers missing from request", logPrefix);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+        }
+        else if (!hdr.isAuthenticationValid()) {
+            log.error("{}Authentication in request does not match", logPrefix);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+
         }
         String requestId = hdr.reqHeader;
         logPrefix = "doSearch() - " + "[" + requestId + "] - ";
@@ -238,9 +264,14 @@ public class PluginLogic {
     public ResponseEntity<JSONResponse> doDelete(WebRequest webReq, String pluginId, String recordId, JSONDeleteRequest request) {
         String logPrefix = "doDelete() - ";
         log.trace("{}Entering method", logPrefix);
-        HeaderDetails hdr = new HeaderDetails(webReq);
-        if (hdr.orgHeader.isEmpty() || hdr.corHeader.isEmpty() || hdr.reqHeader.isEmpty()) {
+        SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
+        if (hdr.checkMissingHeaders()) {
+            log.error("{}Authentication headers missing from request", logPrefix);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+        }
+        else if (!hdr.isAuthenticationValid()) {
+            log.error("{}Authentication in request does not match", logPrefix);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
         }
         String requestId = hdr.reqHeader;
         logPrefix = "deleteItem() - " + "[" + requestId + "] - ";
@@ -370,24 +401,49 @@ public class PluginLogic {
     }
 
     @AllArgsConstructor
-    private class HeaderDetails {
+    private class SecurityHeader {
 
         private static final String ORG_HDR = "ININ-Organization-Id";
         private static final String COR_HDR = "ININ-Correlation-Id";
         private static final String REQ_HDR = "ININ-Request-Id";
+        private static final String AUTH_HDR = "X-PlatformConnector-AuthKey";
 
-        public final String orgHeader;
-        public final String corHeader;
-        public final String reqHeader;
+        private final String orgHeader;
+        private final String corHeader;
+        private final String reqHeader;
+        private final String authHeader;
 
-        private HeaderDetails(WebRequest webReq) {
+        private final String organisationId;
+        private final String currentPassword;
+
+        private SecurityHeader(WebRequest webReq, String organisationId, String currentPassword) {
             final String logPrefix = "ctor() - ";
 
-            log.debug("{}Checking GCloud Headers", logPrefix);
+            log.debug("{}Reading GCloud Headers", logPrefix);
             orgHeader = (webReq.getHeader(ORG_HDR) == null ? "" : webReq.getHeader(ORG_HDR));
             corHeader = (webReq.getHeader(COR_HDR) == null ? "" : webReq.getHeader(COR_HDR));
             reqHeader = (webReq.getHeader(REQ_HDR) == null ? "" : webReq.getHeader(REQ_HDR));
+            authHeader = (webReq.getHeader(AUTH_HDR) == null ? "" : webReq.getHeader(AUTH_HDR));
+            this.organisationId = organisationId;
+            this.currentPassword = currentPassword;
+        }
 
+        public boolean checkMissingHeaders() {
+            final String logPrefix = "checkMissingHeaders() - ";
+            log.trace("{}Checking authentication headers exist", logPrefix);
+            return (orgHeader.isBlank() || corHeader.isBlank() || reqHeader.isBlank() || authHeader.isBlank());
+        }
+
+        public boolean isAuthenticationValid() {
+            final String logPrefix = "isAuthenticationValid() - ";
+            log.trace("{}Checking authentication headers match required values", logPrefix);
+            if (!orgHeader.equals(organisationId)) {
+                log.trace("{}>> OrganisationId is invalid", logPrefix);
+            }
+            if (!authHeader.equals(currentPassword)) {
+                log.trace("{}>> Auth header does not match passwordF", logPrefix);
+            }
+            return (orgHeader.equals(organisationId) && authHeader.equals(currentPassword));
         }
     }
 }

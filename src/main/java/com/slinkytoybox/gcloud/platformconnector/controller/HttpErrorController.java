@@ -74,9 +74,17 @@ public class HttpErrorController implements ErrorController {
             log.trace("{}Status Code: {}", logPrefix, statusCode);
             return HttpStatus.valueOf(statusCode);
         }
+        else {
+            statusCode = (Integer) request
+                    .getAttribute("jakarta.servlet.error.status_code");
+            if (statusCode != null) {
+                log.trace("{}Status Code: {}", logPrefix, statusCode);
+                return HttpStatus.valueOf(statusCode);
+            }
+
+        }
         log.trace("{}Status Code defaulted to 500 Internal Server Error", logPrefix);
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
 }
-
