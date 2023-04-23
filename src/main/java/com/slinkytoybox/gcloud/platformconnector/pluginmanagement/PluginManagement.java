@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.PluginWrapper;
 import org.pf4j.spring.SpringPluginManager;
@@ -77,8 +78,7 @@ public class PluginManagement {
                     .setCls(plug.getDescriptor().getPluginClass())
                     .setProvider(plug.getDescriptor().getProvider())
                     .setState(plug.getPluginState().name())
-                    .setSourceAvailable(pcp != null && pcp.isSourceAvailable())
-                    ;
+                    .setSourceAvailable(pcp != null && pcp.isSourceAvailable());
             if (pcp != null) {
                 log.trace("{}Setting callback interface to plugin", logPrefix);
                 pcp.setContainerInterface(pluginCallback);
@@ -167,5 +167,18 @@ public class PluginManagement {
         log.info("{}Load Plugin returned: {}", logPrefix, ret);
         return true;
     }
+
+    @PreDestroy
+    public void shutdownPlugins() {
+        final String logPrefix = "shutdownPlugins() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Stopping down all plugins immediately", logPrefix);
+        pluginManager.stopPlugins();
+        log.info("{}Done. Unloading all plugins", logPrefix);
+        pluginManager.unloadPlugins();
+        log.info("{}Finished plugin shutdown sequence", logPrefix);
+        log.trace("{}Leaving Method", logPrefix);
+    }
+
 
 }
