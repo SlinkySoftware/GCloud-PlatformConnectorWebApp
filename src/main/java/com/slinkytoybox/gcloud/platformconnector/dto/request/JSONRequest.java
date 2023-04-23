@@ -20,6 +20,7 @@
 package com.slinkytoybox.gcloud.platformconnector.dto.request;
 
 import java.io.Serializable;
+import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -32,5 +33,6 @@ import lombok.experimental.Accessors;
 public abstract class JSONRequest implements Serializable {
     
     private String flowId;
+    private Map<String,String[]> queryString;
     
 }

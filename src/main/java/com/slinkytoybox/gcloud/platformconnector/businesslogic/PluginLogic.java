@@ -89,6 +89,7 @@ public class PluginLogic {
             pluginRequest.setRequestId(requestId);
             pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
             pluginRequest.setObjectDetails(request.getNewDetails());
+            pluginRequest.setRequestParameters(request.getQueryString());
             CreateResponse pluginResponse = (CreateResponse) plug.plugin.getResponseFromRequest(pluginRequest);
             switch (pluginResponse.getStatus()) {
                 case SUCCESS:
@@ -151,7 +152,7 @@ public class PluginLogic {
             pluginRequest.setRequestId(requestId);
             pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
             pluginRequest.setNewDetails(request.getNewDetails());
-
+            pluginRequest.setRequestParameters(request.getQueryString());
             UpdateResponse pluginResponse = (UpdateResponse) plug.plugin.getResponseFromRequest(pluginRequest);
             switch (pluginResponse.getStatus()) {
                 case SUCCESS:
@@ -219,6 +220,7 @@ public class PluginLogic {
             ReadRequest pluginRequest = new ReadRequest();
             pluginRequest.setRequestId(requestId);
             pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
+            pluginRequest.setRequestParameters(request.getQueryString());
             if (recordId != null) {
                 pluginRequest.setObjectId(recordId);
 
@@ -290,6 +292,7 @@ public class PluginLogic {
             pluginRequest.setRequestId(requestId);
             pluginRequest.setRequestDate(OffsetDateTime.now(ZoneId.of("Australia/Sydney")));
             pluginRequest.setObjectId(recordId);
+            pluginRequest.setRequestParameters(request.getQueryString());
             DeleteResponse pluginResponse = (DeleteResponse) plug.plugin.getResponseFromRequest(pluginRequest);
             switch (pluginResponse.getStatus()) {
                 case SUCCESS:

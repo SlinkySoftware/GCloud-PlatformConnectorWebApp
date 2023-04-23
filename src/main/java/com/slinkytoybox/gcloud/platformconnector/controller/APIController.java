@@ -40,13 +40,13 @@ public class APIController {
 
     @Autowired
     private PluginLogic pluginLogic;
-    
+
     @PostMapping("/{pluginId}/record/search")
     public ResponseEntity<JSONResponse> getRecordSearch(WebRequest webReq, @PathVariable("pluginId") String pluginId, @RequestBody JSONReadRequest request) {
         String logPrefix = "getRecordSearch() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Processing POST /{}/record/search", logPrefix, pluginId);
-
+        request.setQueryString(webReq.getParameterMap());
         return pluginLogic.doSearch(webReq, pluginId, request, null);
     }
 
@@ -55,7 +55,9 @@ public class APIController {
         String logPrefix = "getItemSingle() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Processing GET /{}/record/{}", logPrefix, pluginId, recordId);
-        return pluginLogic.doSearch(webReq, pluginId, null, recordId);
+        JSONReadRequest request = new JSONReadRequest();
+        request.setQueryString(webReq.getParameterMap());
+        return pluginLogic.doSearch(webReq, pluginId, request, recordId);
     }
 
     @PatchMapping("/{pluginId}/record/{recordId}")
@@ -63,6 +65,7 @@ public class APIController {
         String logPrefix = "updateItem() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Processing PATCH /{}/record/{}", logPrefix, pluginId, recordId);
+        request.setQueryString(webReq.getParameterMap());
         return pluginLogic.doUpdate(webReq, pluginId, request, recordId);
     }
 
@@ -71,6 +74,7 @@ public class APIController {
         String logPrefix = "createItem() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Processing POST /{}/record/", logPrefix, pluginId);
+        request.setQueryString(webReq.getParameterMap());
         return pluginLogic.doCreate(webReq, pluginId, request);
     }
 
@@ -79,6 +83,7 @@ public class APIController {
         String logPrefix = "deleteItem() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Processing DELETE /{}/record/{}", logPrefix, pluginId, recordId);
+        request.setQueryString(webReq.getParameterMap());
         return pluginLogic.doDelete(webReq, pluginId, recordId, request);
     }
 
