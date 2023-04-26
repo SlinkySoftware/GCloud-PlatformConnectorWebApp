@@ -19,9 +19,9 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.controller;
 
-import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration;
-import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration.ReadKeyStatus;
-import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration.RotateStatus;
+import com.slinkytoybox.gcloud.platformconnector.security.CloudSecurityConfiguration;
+import com.slinkytoybox.gcloud.platformconnector.security.CloudSecurityConfiguration.ReadKeyStatus;
+import com.slinkytoybox.gcloud.platformconnector.security.CloudSecurityConfiguration.RotateStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SecurityController {
 
     @Autowired
-    private SecurityConfiguration securityConfiguration;
+    private CloudSecurityConfiguration securityConfiguration;
 
     @PostMapping(path = "/readKey", produces = "text/plain")
     public ResponseEntity<String> readKey() {

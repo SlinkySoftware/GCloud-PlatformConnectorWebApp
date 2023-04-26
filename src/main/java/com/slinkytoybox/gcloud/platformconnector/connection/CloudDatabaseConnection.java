@@ -19,6 +19,7 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.connection;
 
+import com.slinkytoybox.gcloud.platformconnector.security.PlatformEncryption;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -31,6 +32,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
@@ -41,6 +43,8 @@ import org.springframework.stereotype.Service;
  * @author Michael Junek (michael@juneks.com.au)
  */
 @Service("CloudDatabaseConnection")
+@DependsOn({"PlatformEncryption"})
+
 @Slf4j
 public class CloudDatabaseConnection {
 
@@ -68,6 +72,9 @@ public class CloudDatabaseConnection {
     private Long poolKeepaliveTime;
 
     @Autowired
+    private PlatformEncryption encryptor;
+
+    @Autowired
     private ConfigurableEnvironment env;
 
     @PostConstruct
@@ -84,10 +91,15 @@ public class CloudDatabaseConnection {
 
         log.debug("{}Connection Parameters:\nURL:  {}\nUser:  {}", logPrefix, jdbcUrl, jdbcUser);
 
+        String decryptedPassword;
+        decryptedPassword = encryptor.decrypt(jdbcPassword);
+        if (decryptedPassword == null || decryptedPassword.isBlank()) {
+            throw new IllegalArgumentException("Encrypted password could not be decrypted");
+        }
         log.debug("{}Creating Connection Pool", logPrefix);
         poolSource.setJdbcUrl(jdbcUrl);
         poolSource.setUsername(jdbcUser);
-        poolSource.setPassword(jdbcPassword);
+        poolSource.setPassword(decryptedPassword);
         poolSource.setMinimumIdle(poolMinSize);
 
         poolSource.setConnectionTestQuery(poolTestQuery);

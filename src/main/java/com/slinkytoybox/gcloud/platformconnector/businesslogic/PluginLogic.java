@@ -24,7 +24,7 @@ import com.slinkytoybox.gcloud.platformconnector.dto.request.*;
 import com.slinkytoybox.gcloud.platformconnector.dto.response.*;
 import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.PluginManagement;
 import com.slinkytoybox.gcloud.platformconnector.pluginmanagement.RegisteredPlugin;
-import com.slinkytoybox.gcloud.platformconnector.security.SecurityConfiguration;
+import com.slinkytoybox.gcloud.platformconnector.security.CloudSecurityConfiguration;
 import com.slinkytoybox.gcloud.platformconnectorplugin.PlatformConnectorPlugin;
 import com.slinkytoybox.gcloud.platformconnectorplugin.PluginOperation;
 import com.slinkytoybox.gcloud.platformconnectorplugin.SourceContainer;
@@ -58,7 +58,7 @@ public class PluginLogic {
     private GCloudAPIConnection apiConnection;
 
     @Autowired
-    private SecurityConfiguration securityConfig;
+    private CloudSecurityConfiguration securityConfig;
 
     public ResponseEntity<JSONResponse> doCreate(WebRequest webReq, String pluginId, JSONCreateRequest request) {
         String logPrefix = "doCreate() - ";

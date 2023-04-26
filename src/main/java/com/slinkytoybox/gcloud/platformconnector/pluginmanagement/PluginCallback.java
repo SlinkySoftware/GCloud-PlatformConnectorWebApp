@@ -19,9 +19,11 @@
  */
 package com.slinkytoybox.gcloud.platformconnector.pluginmanagement;
 
+import com.slinkytoybox.gcloud.platformconnector.security.PlatformEncryption;
 import com.slinkytoybox.gcloud.platformconnectorplugin.ContainerInterface;
 import com.slinkytoybox.gcloud.platformconnectorplugin.health.HealthResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,6 +36,9 @@ public class PluginCallback implements ContainerInterface {
 
     
     private PluginManagement pluginManagement;
+    
+    @Autowired
+            private PlatformEncryption encryptor;
     
     void setPluginManagement (PluginManagement pluginManagement) {
         this.pluginManagement = pluginManagement;
@@ -53,6 +58,20 @@ public class PluginCallback implements ContainerInterface {
 
         plugin.setHealth(healthResult);
         log.trace("{}Leaving Method", logPrefix);
+    }
+
+    @Override
+    public String encrypt(String plainText) {
+        final String logPrefix = "encrypt() - ";
+        log.trace("{}Entering Method", logPrefix);
+        return encryptor.encrypt(plainText);
+    }
+
+    @Override
+    public String decrypt(String encryptedText) {
+        final String logPrefix = "decrypt() - ";
+        log.trace("{}Entering Method", logPrefix);
+        return encryptor.decrypt(encryptedText);
     }
 
 }

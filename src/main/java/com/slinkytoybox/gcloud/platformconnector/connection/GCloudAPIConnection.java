@@ -21,9 +21,8 @@ package com.slinkytoybox.gcloud.platformconnector.connection;
 
 import com.mypurecloud.sdk.v2.*;
 import com.mypurecloud.sdk.v2.extensions.AuthResponse;
+import com.slinkytoybox.gcloud.platformconnector.security.PlatformEncryption;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.util.Locale;
 import jakarta.annotation.PostConstruct;
 import java.sql.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,21 +36,24 @@ import org.springframework.stereotype.Service;
  * @author Michael Junek (michael@juneks.com.au)
  */
 @Service("GCloudAPIConnection")
-@DependsOn("CloudDatabaseConnection")
+@DependsOn({"CloudDatabaseConnection", "PlatformEncryption"})
 @Slf4j
 public class GCloudAPIConnection {
 
     private static final String USER_AGENT = "GCloud-License-Management";
-    
+
     @Autowired
     private CloudDatabaseConnection dbConn;
+    
+    @Autowired 
+    private PlatformEncryption platformEncryption;
 
     @Value("${genesys.cloud.api-timeout:10000}")
     private Integer apiTimeout;
-    
+
     @Value("${genesys.cloud.max-retry-sec:5}")
     private Integer maxRetrySec;
-    
+
     @Value("${genesys.cloud.max-retry-count:3}")
     private Integer maxRetryCount;
 
@@ -61,8 +63,7 @@ public class GCloudAPIConnection {
     private CloudPlatform cp = null;
 
     private String platformGuid;
-    
-    
+
     @PostConstruct
     private void init() throws SQLException {
         final String logPrefix = "init() - ";
@@ -71,7 +72,6 @@ public class GCloudAPIConnection {
             log.error("{}Cloud platform ID is not configured correctly. Please set cloud.platform.id in the configuration file", logPrefix);
             throw new IllegalArgumentException("Cloud platform ID is not configured correctly.");
         }
-
 
         log.info("{}Initialisating Genesys Cloud connections", logPrefix);
 
@@ -91,7 +91,7 @@ public class GCloudAPIConnection {
                                 .setOrganisationId(rs.getNString("OrganisationId"))
                                 .setApiRegion(rs.getNString("ApiRegion"))
                                 .setApiClientId(rs.getNString("ApiClientId"))
-                                .setApiClientSecret(rs.getNString("APIClientSecret"))
+                                .setApiClientSecret(platformEncryption.decrypt(rs.getNString("APIClientSecret")))
                                 .setAzureAdAccessGroup(rs.getNString("AzureAdAccessGroup"))
                                 .setOrganisationGuid(rs.getNString("OrganisationGuid"));
                         log.info("{}Got Cloud Platform {} - attempting to connect", logPrefix, cp);
@@ -136,7 +136,6 @@ public class GCloudAPIConnection {
                 .withBasePath(region)
                 .withUserAgent(USER_AGENT)
                 .withShouldRefreshAccessToken(true)
-                //.withDateFormat(dateFormat)
                 .withShouldThrowErrors(true)
                 .withConnectionTimeout(apiTimeout)
                 .withRetryConfiguration(retryConfig)
@@ -171,7 +170,7 @@ public class GCloudAPIConnection {
         log.trace("{}Entering Method", logPrefix);
         return cp;
     }
-    
+
     public String getPlatformGuid() {
         return platformGuid;
     }

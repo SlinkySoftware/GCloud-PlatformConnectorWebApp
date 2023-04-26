@@ -1,5 +1,5 @@
 /*
- *   platformconnector - SecurityConfiguration.java
+ *   platformconnector - CloudSecurityConfiguration.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -33,9 +33,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,9 +44,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.jasypt.digest.StandardStringDigester;
+import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
+import org.jasypt.iv.RandomIvGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -58,9 +59,9 @@ import org.springframework.stereotype.Component;
  * @author Michael Junek (michael@juneks.com.au)
  */
 @Component
-@DependsOn({"CloudDatabaseConnection", "GCloudAPIConnection"})
+@DependsOn({"CloudDatabaseConnection", "GCloudAPIConnection", "PlatformEncryption"})
 @Slf4j
-public class SecurityConfiguration {
+public class CloudSecurityConfiguration {
 
     @Autowired
     private CloudDatabaseConnection cdc;
@@ -76,8 +77,11 @@ public class SecurityConfiguration {
     @Value("${server.id:DefaultServerId}")
     private String serverId;
 
-    @Scheduled(fixedDelayString = "120000", initialDelayString = "60000")
+    @Autowired
+    private PlatformEncryption encryptor;
+
     @PostConstruct
+    @Scheduled(fixedDelayString = "120000", initialDelayString = "60000")
     public ReadKeyStatus checkPasswordChanged() {
         final String logPrefix = "checkPasswordChanged() - ";
         log.trace("{}Entering Method", logPrefix);
@@ -92,9 +96,11 @@ public class SecurityConfiguration {
                 try (ResultSet rs = ps.executeQuery()) {
                     log.info("{}Getting key from Database", logPrefix);
                     while (rs.next()) {
-                        tempSecurePassword = rs.getNString("SecureKey");
-                        lastUpdated = (rs.getTimestamp("LastUpdated") == null ? LocalDateTime.MIN : rs.getTimestamp("LastUpdated").toLocalDateTime());
 
+                        String encPassword = rs.getNString("SecureKey");
+                        log.trace("{}Decrypting DB password", logPrefix);
+                        tempSecurePassword = encryptor.decrypt(encPassword);
+                        lastUpdated = (rs.getTimestamp("LastUpdated") == null ? LocalDateTime.MIN : rs.getTimestamp("LastUpdated").toLocalDateTime());
                         if (tempSecurePassword.equals(securePassword)) {
                             log.trace("{}Password has not changed, exiting", logPrefix);
                             return ReadKeyStatus.PASSWORD_NOT_CHANGED;
@@ -184,11 +190,13 @@ public class SecurityConfiguration {
         String updateKeySql = "UPDATE INT_SECURE_KEY SET SecureKey = ?, LastUpdated = GETDATE() WHERE CloudPlatformId = ?";
         String insertKeySql = "INSERT INTO INT_SECURE_KEY (CloudPlatformId, SecureKey, LastUpdated) VALUES (?, ?, GETDATE())";
         Long cloudPlatformId = cloudApi.getCloudPlatform().getId();
+        String encryptedPassword = encryptor.encrypt(password);
+
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
             int rowsUpdated;
             dbConnection.setAutoCommit(false);
             try (PreparedStatement ps = dbConnection.prepareStatement(updateKeySql)) {
-                ps.setNString(1, password);
+                ps.setNString(1, encryptedPassword);
                 ps.setLong(2, cloudPlatformId);
                 rowsUpdated = ps.executeUpdate();
                 log.trace("{}Statement issued, rows updated: {}", logPrefix, rowsUpdated);
@@ -201,7 +209,7 @@ public class SecurityConfiguration {
             else {
                 try (PreparedStatement ps = dbConnection.prepareStatement(insertKeySql)) {
                     ps.setLong(1, cloudPlatformId);
-                    ps.setNString(2, password);
+                    ps.setNString(2, encryptedPassword);
                     rowsUpdated = ps.executeUpdate();
                     log.trace("{}Statement issued, rows inserted: {}", logPrefix, rowsUpdated);
                 }
@@ -234,17 +242,11 @@ public class SecurityConfiguration {
         final String logPrefix = "generateSecurePassword() - ";
         log.trace("{}Entering Method", logPrefix);
         String randomString = UUID.randomUUID().toString();
-        byte[] encodedString;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            encodedString = digest.digest(randomString.getBytes(StandardCharsets.UTF_8));
-        }
-        catch (NoSuchAlgorithmException ex) {
-            log.warn("{}SHA256 hashing not available, using UUID directly");
-            encodedString = randomString.getBytes(StandardCharsets.UTF_8);
-        }
-
-        return Base64.getEncoder().encodeToString(encodedString);
+        StandardStringDigester sd = new StandardStringDigester();
+        sd.setAlgorithm("SHA-256");
+        sd.setIterations(20000);
+        String encodedString = sd.digest(randomString);
+        return Base64.getEncoder().encodeToString(encodedString.getBytes());
     }
 
     private boolean notifyOtherHosts() {
