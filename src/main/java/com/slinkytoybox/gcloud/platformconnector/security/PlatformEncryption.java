@@ -76,6 +76,10 @@ public class PlatformEncryption {
         final String logPrefix = "decrypt() - ";
         log.trace("{}Entering Method", logPrefix);
         String plainText;
+        if (encryptedString == null || encryptedString.isBlank()) {
+            log.warn("{}Encrypted string was null or blank. Returning as-is", logPrefix);
+            return encryptedString;
+        }
         if (encryptedString.startsWith("ENC:")) {
             try {
                 plainText = encryptor.decrypt(encryptedString.substring(4));

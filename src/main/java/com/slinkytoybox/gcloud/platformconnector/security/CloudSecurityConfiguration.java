@@ -45,12 +45,9 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.jasypt.digest.StandardStringDigester;
-import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
-import org.jasypt.iv.RandomIvGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

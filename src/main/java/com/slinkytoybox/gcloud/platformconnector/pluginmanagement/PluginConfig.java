@@ -34,22 +34,21 @@ import org.springframework.context.annotation.DependsOn;
 public class PluginConfig {
 
     @Bean
+    @DependsOn({"CloudDatabaseConnection", "PlatformEncryption", "GCloudAPIConnection"})
     public SpringPluginManager pluginManager() {
         final String logPrefix = "pluginManager() - ";
         log.trace("{}Entering method", logPrefix);
         return new SpringPluginManager();
     }
-    
-    
 
     @Bean
-    @DependsOn("pluginManager") 
+    @DependsOn("pluginManager")
     public PluginManagement pluginManagement() {
         final String logPrefix = "pluginManagement() - ";
         log.trace("{}Entering method", logPrefix);
         log.info("{}Setting up Plugins", logPrefix);
         return new PluginManagement();
-        
+
     }
 
 }

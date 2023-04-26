@@ -79,11 +79,11 @@ public class PluginManagement {
                     .setProvider(plug.getDescriptor().getProvider())
                     .setState(plug.getPluginState().name())
                     .setSourceAvailable(pcp != null && pcp.isSourceAvailable());
+            pluginMap.put(pluginId, rp);
             if (pcp != null) {
                 log.trace("{}Setting callback interface to plugin", logPrefix);
                 pcp.setContainerInterface(pluginCallback);
             }
-            pluginMap.put(pluginId, rp);
         }
 
         log.info("{}Found {} registered plugins", logPrefix, pluginMap.size());
