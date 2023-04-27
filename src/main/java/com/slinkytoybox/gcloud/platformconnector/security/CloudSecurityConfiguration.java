@@ -105,11 +105,16 @@ public class CloudSecurityConfiguration {
                     }
                 }
             }
-        }
-        catch (Exception ex) {
+             catch (Exception ex) {
             log.error("{}Exception encountered reading password", logPrefix, ex);
             tempSecurePassword = "";
         }
+        }
+        catch (Exception ex) {
+            log.error("{}Exception encountered getting database connection - NOT MODIFYING EXISTING PASSWORD", logPrefix, ex);
+            return ReadKeyStatus.PASSWORD_NOT_CHANGED;
+        }
+        
         result = ReadKeyStatus.PASSWORD_UPDATED;
         if (tempSecurePassword.isEmpty() || lastUpdated == LocalDateTime.MIN) {
             log.warn("{}Password was not retrieved. Forcing a rotate", logPrefix);
