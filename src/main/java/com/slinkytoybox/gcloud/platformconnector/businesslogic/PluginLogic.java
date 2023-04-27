@@ -48,7 +48,6 @@ import org.springframework.web.context.request.WebRequest;
  */
 @Component
 @Slf4j
-
 public class PluginLogic {
 
     @Autowired
@@ -66,12 +65,11 @@ public class PluginLogic {
         SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
         if (hdr.checkMissingHeaders()) {
             log.error("{}Authentication headers missing from request", logPrefix);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing").setErrorCode(400));
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
-
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource").setErrorCode(403));
         }
         String requestId = hdr.reqHeader;
         logPrefix = "createItem() - " + "[" + requestId + "] - ";
@@ -83,7 +81,6 @@ public class PluginLogic {
         if (check != null) {
             return check;
         }
-        HttpStatus returnStatus;
         try {
             CreateRequest pluginRequest = new CreateRequest();
             pluginRequest.setRequestId(requestId);
@@ -91,33 +88,14 @@ public class PluginLogic {
             pluginRequest.setObjectDetails(request.getNewDetails());
             pluginRequest.setRequestParameters(request.getQueryString());
             CreateResponse pluginResponse = (CreateResponse) plug.plugin.getResponseFromRequest(pluginRequest);
-            switch (pluginResponse.getStatus()) {
-                case SUCCESS:
-                    log.info("{}Successfully created item, ID: {}", logPrefix, pluginResponse.getObjectId());
-                    jsonResponse.setObjectId(pluginResponse.getObjectId());
-                    jsonResponse.setObjectDetails(pluginResponse.getObjectDetails());
-                    returnStatus = HttpStatus.OK;
-                    break;
-                case RECORD_NOT_FOUND: // should never get this on create
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                //fallthrough
-                case MULTIPLE_RECORDS: // should never get this on create
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                //fallthrough
-                case FAILURE:
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                //fallthrough
-                default:
-                    log.error("{}Failure creating record", logPrefix);
-                    returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            }
+            setErrorDetails(jsonResponse, pluginResponse);
         }
         catch (Exception ex) {
             log.error("{}Exception when creating record", logPrefix, ex);
             jsonResponse.setErrorMessage(ex.getMessage());
-            returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            jsonResponse.setErrorCode(-1);
         }
-        return ResponseEntity.status(returnStatus).body(jsonResponse);
+        return ResponseEntity.ok().body(jsonResponse);
 
     }
 
@@ -127,12 +105,11 @@ public class PluginLogic {
         SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
         if (hdr.checkMissingHeaders()) {
             log.error("{}Authentication headers missing from request", logPrefix);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing").setErrorCode(400));
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
-
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource").setErrorCode(403));
         }
         String requestId = hdr.reqHeader;
         logPrefix = "doUpdate() - " + "[" + requestId + "] - ";
@@ -146,7 +123,6 @@ public class PluginLogic {
         if (check != null) {
             return check;
         }
-        HttpStatus returnStatus;
         try {
             UpdateRequest pluginRequest = new UpdateRequest();
             pluginRequest.setRequestId(requestId);
@@ -154,38 +130,14 @@ public class PluginLogic {
             pluginRequest.setNewDetails(request.getNewDetails());
             pluginRequest.setRequestParameters(request.getQueryString());
             UpdateResponse pluginResponse = (UpdateResponse) plug.plugin.getResponseFromRequest(pluginRequest);
-            switch (pluginResponse.getStatus()) {
-                case SUCCESS:
-                    log.info("{}Successfully updated data", logPrefix);
-                    jsonResponse.setObjectId(pluginResponse.getObjectId());
-                    jsonResponse.setObjectDetails(pluginResponse.getObjectDetails());
-                    returnStatus = HttpStatus.OK;
-                    break;
-                case RECORD_NOT_FOUND:
-                    log.error("{}Could not find record", logPrefix);
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    returnStatus = HttpStatus.NOT_FOUND;
-                    break;
-                case MULTIPLE_RECORDS:
-                    log.error("{}Multiple records found", logPrefix);
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    returnStatus = HttpStatus.MULTIPLE_CHOICES;
-                    break;
-                case FAILURE:
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                //fallthrough
-                default:
-                    log.error("{}Failure updating record", logPrefix);
-                    returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            }
+            setErrorDetails(jsonResponse, pluginResponse);
         }
         catch (Exception ex) {
             log.error("{}Exception when updating record", logPrefix, ex);
             jsonResponse.setErrorMessage(ex.getMessage());
-            returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            jsonResponse.setErrorCode(-1);
         }
-        return ResponseEntity.status(returnStatus).body(jsonResponse);
-
+        return ResponseEntity.ok().body(jsonResponse);
     }
 
     public ResponseEntity<JSONResponse> doSearch(WebRequest webReq, String pluginId, JSONReadRequest request, String recordId) {
@@ -194,12 +146,11 @@ public class PluginLogic {
         SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
         if (hdr.checkMissingHeaders()) {
             log.error("{}Authentication headers missing from request", logPrefix);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing").setErrorCode(400));
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
-
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource").setErrorCode(403));
         }
         String requestId = hdr.reqHeader;
         logPrefix = "doSearch() - " + "[" + requestId + "] - ";
@@ -215,7 +166,6 @@ public class PluginLogic {
         if (check != null) {
             return check;
         }
-        HttpStatus returnStatus;
         try {
             ReadRequest pluginRequest = new ReadRequest();
             pluginRequest.setRequestId(requestId);
@@ -223,44 +173,18 @@ public class PluginLogic {
             pluginRequest.setRequestParameters(request.getQueryString());
             if (recordId != null) {
                 pluginRequest.setObjectId(recordId);
-
             }
             else {
                 pluginRequest.setSearchParameters(request.getSearchParameters());
             }
             ReadResponse pluginResponse = (ReadResponse) plug.plugin.getResponseFromRequest(pluginRequest);
-
-            switch (pluginResponse.getStatus()) {
-                case SUCCESS:
-                    log.info("{}Successfully looked up data", logPrefix);
-                    jsonResponse.setObjectId(pluginResponse.getObjectId());
-                    jsonResponse.setObjectDetails(pluginResponse.getObjectDetails());
-                    returnStatus = HttpStatus.OK;
-                    break;
-                case RECORD_NOT_FOUND:
-                    log.warn("{}Could not find record", logPrefix);
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    returnStatus = HttpStatus.NOT_FOUND;
-                    break;
-                case MULTIPLE_RECORDS:
-                    log.error("{}Multiple records found", logPrefix);
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    returnStatus = HttpStatus.MULTIPLE_CHOICES;
-                    break;
-                case FAILURE:
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                //fallthrough
-                default:
-                    log.error("{}Failure looking up record", logPrefix);
-                    returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            }
+            setErrorDetails(jsonResponse, pluginResponse);
         }
         catch (Exception ex) {
             log.error("{}Exception when looking up record", logPrefix, ex);
             jsonResponse.setErrorMessage(ex.getMessage());
-            returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         }
-        return ResponseEntity.status(returnStatus).body(jsonResponse);
+        return ResponseEntity.ok().body(jsonResponse);
     }
 
     public ResponseEntity<JSONResponse> doDelete(WebRequest webReq, String pluginId, String recordId, JSONDeleteRequest request) {
@@ -269,11 +193,11 @@ public class PluginLogic {
         SecurityHeader hdr = new SecurityHeader(webReq, apiConnection.getPlatformGuid(), securityConfig.getCurrentPassword());
         if (hdr.checkMissingHeaders()) {
             log.error("{}Authentication headers missing from request", logPrefix);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JSONErrorResponse().setErrorMessage("Invalid request, required headers missing").setErrorCode(400));
         }
         else if (!hdr.isAuthenticationValid()) {
             log.error("{}Authentication in request does not match", logPrefix);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new JSONErrorResponse().setErrorMessage("You are not authorised to access this resource").setErrorCode(403));
         }
         String requestId = hdr.reqHeader;
         logPrefix = "deleteItem() - " + "[" + requestId + "] - ";
@@ -286,7 +210,6 @@ public class PluginLogic {
         if (check != null) {
             return check;
         }
-        HttpStatus returnStatus;
         try {
             DeleteRequest pluginRequest = new DeleteRequest();
             pluginRequest.setRequestId(requestId);
@@ -294,36 +217,55 @@ public class PluginLogic {
             pluginRequest.setObjectId(recordId);
             pluginRequest.setRequestParameters(request.getQueryString());
             DeleteResponse pluginResponse = (DeleteResponse) plug.plugin.getResponseFromRequest(pluginRequest);
-            switch (pluginResponse.getStatus()) {
-                case SUCCESS:
-                    log.info("{}Successfully created item, ID: {}", logPrefix, pluginResponse.getObjectId());
-                    jsonResponse.setObjectId(pluginResponse.getObjectId());
-                    returnStatus = HttpStatus.OK;
-                    break;
-                case RECORD_NOT_FOUND:
-                    log.error("{}Could not find record", logPrefix);
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    returnStatus = HttpStatus.NOT_FOUND;
-                    break;
-                case MULTIPLE_RECORDS:
-                    log.error("{}Multiple records found", logPrefix);
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                    returnStatus = HttpStatus.MULTIPLE_CHOICES;
-                    break;
-                case FAILURE:
-                    jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
-                //fallthrough
-                default:
-                    log.error("{}Failure creating record", logPrefix);
-                    returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            }
+            setErrorDetails(jsonResponse, pluginResponse);
         }
         catch (Exception ex) {
             log.error("{}Exception when deleting record", logPrefix, ex);
             jsonResponse.setErrorMessage(ex.getMessage());
-            returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            jsonResponse.setErrorCode(-1);
         }
-        return ResponseEntity.status(returnStatus).body(jsonResponse);
+        return ResponseEntity.ok().body(jsonResponse);
+    }
+
+    private void setErrorDetails(JSONResponse jsonResponse, PluginResponse pluginResponse) {
+        String logPrefix = "setErrorDetails() - ";
+        log.trace("{}Entering method", logPrefix);
+        log.debug("{}Setting response data based on source", logPrefix);
+        switch (pluginResponse.getStatus()) {
+            case SUCCESS -> {
+                log.info("{}Successfully created item, ID: {}", logPrefix, pluginResponse.getObjectId());
+                jsonResponse.setObjectId(pluginResponse.getObjectId());
+                if (pluginResponse.getClass().isInstance(CreateResponse.class)) {
+                    ((JSONCreateResponse) jsonResponse).setObjectDetails(((CreateResponse) pluginResponse).getObjectDetails());
+                }
+                else if (pluginResponse.getClass().isInstance(UpdateResponse.class)) {
+                    ((JSONUpdateResponse) jsonResponse).setObjectDetails(((UpdateResponse) pluginResponse).getObjectDetails());
+                }
+                else if (pluginResponse.getClass().isInstance(ReadResponse.class)) {
+                    ((JSONReadResponse) jsonResponse).setObjectDetails(((ReadResponse) pluginResponse).getObjectDetails());
+                }
+                jsonResponse.setErrorCode(0);
+            }
+            case RECORD_NOT_FOUND -> {
+                log.error("{}Could not find record", logPrefix);
+                jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                jsonResponse.setErrorCode(1);
+            }
+            case MULTIPLE_RECORDS -> {
+                log.error("{}Multiple records found", logPrefix);
+                jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                jsonResponse.setErrorCode(2);
+            }
+            case FAILURE -> {
+                jsonResponse.setErrorMessage(pluginResponse.getErrorMessage());
+                jsonResponse.setErrorCode(3);
+            }
+            default -> {
+                log.error("{}Failure creating record", logPrefix);
+                jsonResponse.setErrorCode(4);
+            }
+        }
+        log.trace("{}Leaving method", logPrefix);
     }
 
     public SourceContainer getSourceCode(String pluginId) {

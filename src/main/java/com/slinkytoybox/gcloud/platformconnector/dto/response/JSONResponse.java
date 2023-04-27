@@ -35,6 +35,7 @@ public abstract class JSONResponse implements Serializable {
     private String pluginId;
     private String objectId = null;
     private String errorMessage = null;
+    private Integer errorCode = null;
 
     protected JSONResponse(String requestId) {
         if (requestId == null) {
